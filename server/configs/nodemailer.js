@@ -1,4 +1,4 @@
-import { nodemailer } from "nodemailer";
+import nodemailer from "nodemailer";
 
 //Create transporter object using SMTP settings
 const transporter = nodemailer.createTransport({
