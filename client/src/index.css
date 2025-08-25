@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+* {
+    font-weight: 500;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
