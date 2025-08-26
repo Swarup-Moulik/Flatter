@@ -4,10 +4,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import MenuItems from './MenuItems';
 import { CirclePlus, LogOut } from 'lucide-react';
 import { useClerk, UserButton } from '@clerk/clerk-react';
+import { useSelector } from 'react-redux';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     const navigate = useNavigate();
-    const user = dummyUserData;
+    const user = useSelector((state)=>state.user.value);
     const { signOut } = useClerk();
     return (
         <div className={`w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute
