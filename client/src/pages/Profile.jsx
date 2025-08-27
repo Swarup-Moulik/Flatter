@@ -41,10 +41,10 @@ const Profile = () => {
     }
   }, [profileId, currentUser])
   return user ? (
-    <div className='relative h-full overflow-y-scroll bg-gray-50 p-6'>
+    <div className='relative h-full overflow-y-scroll bg-gradient-to-b from-transition1 to-background p-6'>
       <div className='max-w-3xl mx-auto'>
         {/* Profile Card */}
-        <div className='bg-white rounded-2xl shadow overflow-hidden'>
+        <div className='bg-background rounded-2xl shadow overflow-hidden'>
           {/* Cover Photo */}
           <div className='h-40 md:h-56 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200'>
             {user.cover_photo && <img src={user.cover_photo} className='w-full h-full object-cover' alt="Cover Photo" />}
@@ -54,10 +54,10 @@ const Profile = () => {
         </div>
         {/* Tabs */}
         <div className='mt-6'>
-          <div className='bg-white rounded-xl shadow p-1 flex max-w-md mx-auto'>
+          <div className='bg-background rounded-xl shadow p-1 flex max-w-md mx-auto'>
             {['Posts', 'Media', 'Likes'].map((tab) => (
               <button key={tab} className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer
-              ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900'}`} onClick={() => setActiveTab(tab)}>
+              ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-foreground hover:text-primary'}`} onClick={() => setActiveTab(tab)}>
                 {tab}
               </button>
             ))}
@@ -78,7 +78,7 @@ const Profile = () => {
                   {post.image_urls.map((image, index)=>(
                     <Link target='_blank' to={image} key={image} className='relative group'>
                       <img src={image} key={index} className='w-64 aspect-video object-cover' alt="Post Pics"/>
-                      <p className='absolute bottom-0 right-0 text-xs p-1 px-3 backdrop-blur-xl text-white opacity-0 transition
+                      <p className='absolute bottom-0 right-0 text-xs p-1 px-3 backdrop-blur-xl text-background opacity-0 transition
                       duration-300 group-hover:opacity-100'>Posted {moment(post.createdAt).fromNow()}</p>
                     </Link>
                   ))}

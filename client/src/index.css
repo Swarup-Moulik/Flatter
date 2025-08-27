@@ -1,8 +1,46 @@
 @import "tailwindcss";
 
 * {
-    font-weight: 500;
+  font-weight: 500;
 }
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
+}
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-background: hsl(var(--background));
+  --color-primary: hsl(var(--primary));
+  --color-foreground: hsl(var(--foreground));
+  --color-transition1: hsl(var(--transition1));
+}
+
+@layer base {
+  :root {
+    --border: 218 13.6% 84.1%; /* Light gray border */
+    --background: 0 0% 100%; /* Clean white background */
+    --foreground: 217 21.2% 26.9%; /* Gray text for contrast */
+    --primary: 0 0% 0%; /* Black Text */
+    --transition1: 248, 100%, 95%;  /* Indigo-50*/
+  }
+
+  .dark {
+    --border: 218 13.6% 84.1%;
+    --background: 0 0% 3%;
+    --foreground: 218 13.6% 84.1%;
+    --primary: 0 0% 100%;
+    --transition1: 248, 40%, 15%;
+  }
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-primary transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 }

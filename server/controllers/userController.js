@@ -209,7 +209,7 @@ export const sendConnectionRequest = async (req, res) => {
             })
             await inngest.send({
                 name: 'app/connection-request',
-                data: {connectionId: newConnection._id}
+                data: { connectionId: newConnection._id }
             })
             return res.json({
                 success: true,
@@ -243,8 +243,21 @@ export const getUserConnections = async (req, res) => {
         const connections = user.connections;
         const following = user.following;
         const followers = user.followers;
-        const pendingConnections = (await Connection.find({ to_user_id: userId, status: 'pending' }).populate('from_user_id')).map(
-            connection => connection.from_user_id);
+        /*const pendingConnections = (await Connection.find({ to_user_id: userId, status: 'pending' }).populate('from_user_id')).map(
+            connection => connection.from_user_id);*/
+        const incomingPending = await Connection.find({
+            to_user_id: userId,
+            status: 'pending'
+        }).populate('from_user_id');
+
+        const outgoingPending = await Connection.find({
+            from_user_id: userId,
+            status: 'pending'
+        }).populate('to_user_id');
+        const pendingConnections = {
+            incoming: incomingPending.map(c => c.from_user_id),
+            outgoing: outgoingPending.map(c => c.to_user_id)
+        };
         res.json({
             success: true,
             connections,
@@ -295,6 +308,38 @@ export const acceptConnectionRequest = async (req, res) => {
     }
 }
 
+//Cancel Accept Request
+export const cancelRequest = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { id } = req.body; // id = other user's id
+
+        // Find the pending connection (either sent or received)
+        const connection = await Connection.findOneAndDelete({
+            $or: [
+                { from_user_id: userId, to_user_id: id, status: 'pending' },  // you sent
+                { from_user_id: id, to_user_id: userId, status: 'pending' }   // you received
+            ]
+        });
+        if (!connection) {
+            return res.json({
+                success: false,
+                message: 'No pending connection found.'
+            });
+        }
+        res.json({
+            success: true,
+            message: 'Connection request cancelled successfully.'
+        });
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 //Get User Profiles
 export const getUserProfiles = async (req, res) => {
     try {
@@ -306,7 +351,7 @@ export const getUserProfiles = async (req, res) => {
                 message: 'Profile Not Found.'
             })
         }
-        const posts = await Post.find({user: profileId}).populate('user');
+        const posts = await Post.find({ user: profileId }).populate('user');
         res.json({
             success: true,
             profile,

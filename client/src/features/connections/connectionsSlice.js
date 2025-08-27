@@ -3,7 +3,7 @@ import api from '../../api/axios';
 
 const initialState = {
     connections: [],
-    pendingConnections: [],
+    pendingConnections: { incoming: [], outgoing: [] },
     followers: [],
     following: []
 };
