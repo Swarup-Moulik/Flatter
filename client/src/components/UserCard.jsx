@@ -1,5 +1,3 @@
-import React from 'react'
-import { dummyUserData } from '../assets/assets'
 import { MapPin, MessageCircle, Plus, UserPlus } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/clerk-react';
@@ -13,6 +11,8 @@ const UserCard = ({ user }) => {
     const { getToken } = useAuth();
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    // Check if the current user is following the user in the card
+    const isFollowing = currentUser?.following.includes(user._id);
     const handleFollow = async () => {
         try {
             const token = await getToken();
@@ -43,6 +43,20 @@ const UserCard = ({ user }) => {
             toast.error(error.message);
         }
     }
+    const handleUnfollow = async (userId) => {
+        try {
+          const token = await getToken();
+          const { data } = await api.post('/api/user/unfollow', { id: userId }, { headers: { Authorization: `Bearer ${token}` } });
+          if (data.success) {
+            toast.success(data.message);
+            dispatch(fetchUser(token));
+          } else {
+            toast(data.message);
+          }
+        } catch (error) {
+          toast.error(error.message);
+        }
+    };
     return (
         <div key={user._id} className='p-4 pt-6 flex flex-col justify-between w-72 shadow bg-background rounded-lg'>
             <div className='text-center'>
@@ -61,10 +75,20 @@ const UserCard = ({ user }) => {
             </div>
             <div className='flex mt-4 gap-2'>
                 {/* Follow Button */}
-                <button className='w-full py-2 rounded-md flex justify-center items-center gap-2 bg-gradient-to-r from-indigo-500
-                to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white cursor-pointer'
-                    disabled={currentUser?.following.includes(user._id)} onClick={handleFollow}>
-                    <UserPlus className='w-4 h-4' />{currentUser?.following.includes(user._id) ? 'Following' : 'Follow'}
+                <button
+                    className='w-full py-2 rounded-md flex justify-center items-center gap-2 bg-gradient-to-r from-indigo-500 
+                    to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white cursor-pointer'
+                    onClick={isFollowing ? () => handleUnfollow(user._id) : handleFollow}
+                >
+                    {isFollowing ? (
+                        <>
+                            <UserPlus className='w-4 h-4' /> Unfollow
+                        </>
+                    ) : (
+                        <>
+                            <UserPlus className='w-4 h-4' /> Follow
+                        </>
+                    )}
                 </button>
                 {/* Connection Request Button / Message Button */}
                 <button className='flex justify-center items-center w-16 text-slate-500 group rounded-md cursor-pointer transition

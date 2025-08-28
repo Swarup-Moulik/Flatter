@@ -35,7 +35,7 @@ const Connections = () => {
       toast.error(error.message);
     }
   };
-
+  
   const acceptConnection = async (userId) => {
     try {
       const token = await getToken();
