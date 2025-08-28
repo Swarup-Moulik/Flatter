@@ -82,7 +82,8 @@ const Connections = () => {
         {/* Counts */}
         <div className='mb-8 flex flex-wrap gap-6'>
           {dataArray.map((item, index) => (
-            <div key={index} className='flex flex-col items-center justify-center gap-1 border h-20 w-40 border-border/80 bg-background shadow rounded-md'>
+            <div key={index} className='flex flex-col items-center justify-center gap-1 h-20 w-40 bg-background
+             shadow rounded-md'>
               <b>{Array.isArray(item.value) ? item.value.length : (item.value?.incoming?.length || 0) + (item.value?.outgoing?.length || 0)}</b>
               <p className='text-foreground'>{item.label}</p>
             </div>
@@ -90,7 +91,7 @@ const Connections = () => {
         </div>
 
         {/* Tabs */}
-        <div className='inline-flex flex-wrap items-center border border-border/80 rounded-md p-1 bg-background shadow-sm'>
+        <div className='inline-flex flex-wrap items-center border border-border/40 rounded-md p-1 bg-background shadow-sm'>
           {dataArray.map((tab) => (
             <button
               key={tab.label}

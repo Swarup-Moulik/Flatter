@@ -63,7 +63,8 @@ const ChatBox = () => {
   }, [connections, userId])
   return user && (
     <div className='flex flex-col h-screen'>
-      <div className='flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-transition1 to-background border-b'>
+      <div className='flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-transition1 to-background border-b 
+      border-border/70'>
         <img src={user.profile_picture} alt="User Profile Picture" className='size-8 rounded-full'/>
         <div>
           <p className='font-medium'>{user.full_name}</p>
@@ -84,8 +85,8 @@ const ChatBox = () => {
         <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className='px-4'>
-        <div className='flex items-center gap-3 pl-5 p-1.5 bg-background w-full max-w-xl mx-auto border border-gray-200 shadow mb-5 rounded-full'>
+      <div className='px-4 pt-2 bg-background z-100'>
+        <div className='flex items-center gap-3 pl-5 p-1.5 bg-background w-full max-w-xl mx-auto border border-border/70 shadow mb-5 rounded-full'>
           <input type="text" className='flex-1 outline-none text-foreground' placeholder='Type a message...' 
           onKeyDown={(e)=>e.key === 'Enter' && sendMessage()} onChange={(e)=>setText(e.target.value)} value={text}/>
           <label htmlFor="Image">

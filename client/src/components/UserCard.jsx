@@ -44,7 +44,7 @@ const UserCard = ({ user }) => {
         }
     }
     return (
-        <div key={user._id} className='p-4 pt-6 flex flex-col justify-between w-72 shadow border border-border/70 bg-background rounded-md'>
+        <div key={user._id} className='p-4 pt-6 flex flex-col justify-between w-72 shadow bg-background rounded-lg'>
             <div className='text-center'>
                 <img src={user.profile_picture} className='rounded-full w-16 shadow-md mx-auto' alt="User Profile Picture" />
                 <p className='mt-4 font-semibold'>{user.full_name}</p>
@@ -68,7 +68,7 @@ const UserCard = ({ user }) => {
                 </button>
                 {/* Connection Request Button / Message Button */}
                 <button className='flex justify-center items-center w-16 text-slate-500 group rounded-md cursor-pointer transition
-                active:scale-95 border' onClick={handleConnectionRequest}>
+                active:scale-95 border border-border/70' onClick={handleConnectionRequest}>
                     {currentUser?.connections.includes(user._id) ?
                         <MessageCircle className='w-5 h-5 group-hover:scale-105 transition' />
                         :

@@ -45,12 +45,12 @@ const Discover = () => {
           <p className='text-foreground'>Connect with amazing people and grow your network.</p>
         </div>
         {/* Search */}
-        <div className='mb-8 shadow-md rounded-md border border-border/50 bg-background/90'>
+        <div className='mb-8 shadow-md rounded-md bg-background/90'>
           <div className='p-6'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground w-5 h-5'/>
               <input type="text" placeholder='Search people by name, username, bio or location...' className='pl-10 sm:pl-12 py-2 w-full
-              border rounded-md max-sm:text-sm' onChange={(e)=>setInput(e.target.value)} value={input} onKeyUp={handleSearch}/>
+              border border-border/70 rounded-md max-sm:text-sm' onChange={(e)=>setInput(e.target.value)} value={input} onKeyUp={handleSearch}/>
             </div>
           </div>
         </div>
