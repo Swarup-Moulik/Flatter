@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-react';
-import { ArrowLeft, Sparkle, TextIcon, Upload } from 'lucide-react';
+import { ArrowLeft, Sparkle, TextIcon, Upload, X } from 'lucide-react';
 import React, { useState } from 'react'
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -9,54 +9,63 @@ const StoryModal = ({ setShowModal, fetchStories }) => {
     const [mode, setMode] = useState('text');
     const [background, setBackground] = useState(bgColors[0]);
     const [text, setText] = useState('');
-    const [media, setMedia] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+    const [media, setMedia] = useState([]);
+    const [previewUrls, setPreviewUrls] = useState([]);
     const { getToken } = useAuth();
     const MAX_VIDEO_DURATION = 60; //seconds
     const MAX_VIDEO_SIZE = 50; //MB
     const handleMediaUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.type.startsWith('video')) {
+        const files = Array.from(e.target.files || []);
+        let validFiles = [];
+        let previews = [];
+        if (media.length + files.length > 10) {
+            toast.error("You can upload a maximum of 10 images/videos");
+            return;
+        }
+        files.forEach((file) => {
+            if (file.type.startsWith("video")) {
                 if (file.size > MAX_VIDEO_SIZE * 1024 * 1024) {
-                    toast.error("Video file size can't exceed 50 mb");
-                    setMedia(null);
-                    setPreviewUrl(null);
+                    toast.error(`${file.name} exceeds 50MB`);
                     return;
                 }
-                const video = document.createElement('video');
-                video.preload = 'metadata';
+                const video = document.createElement("video");
+                video.preload = "metadata";
                 video.onloadedmetadata = () => {
                     window.URL.revokeObjectURL(video.src);
                     if (video.duration > MAX_VIDEO_DURATION) {
-                        toast.error('Video duration cannot exceed 1 minute.');
-                        setMedia(null);
-                        setPreviewUrl(null);
+                        toast.error(`${file.name} longer than 60s`);
                     } else {
-                        setMedia(file);
-                        setPreviewUrl(URL.createObjectURL(file));
-                        setText('');
-                        setMode('media');
+                        validFiles.push(file);
+                        previews.push(URL.createObjectURL(file));
+                        setMode("media");
+                        // ✅ append once loaded
+                        setMedia((prev) => [...prev, file]);
+                        setPreviewUrls((prev) => [...prev, URL.createObjectURL(file)]);
                     }
-                }
+                };
                 video.src = URL.createObjectURL(file);
-            } else if (file.type.startsWith('image')) {
-                setMedia(file);
-                setPreviewUrl(URL.createObjectURL(file));
-                setText('');
-                setMode('media');
+            } else if (file.type.startsWith("image")) {
+                validFiles.push(file);
+                previews.push(URL.createObjectURL(file));
+                setMode("media");
             }
+        });
+        // ✅ append non-video files in one go
+        if (validFiles.length > 0) {
+            setMedia((prev) => [...prev, ...validFiles]);
+            setPreviewUrls((prev) => [...prev, ...previews]);
         }
-    }
+        setText("");
+    };
     const handleCreateStory = async () => {
-        const media_type = mode === 'media' ? media?.type.startsWith('image') ? 'image' : 'video' : 'text';
-        if (media_type === 'text' && !text) {
+        if (mode === 'text' && !text.trim()) {
             throw new Error("Please enter some text");
         }
         let formData = new FormData();
         formData.append('content', text);
-        formData.append('media_type', media_type);
-        formData.append('media', media);
+        media.forEach((file) => {
+            formData.append("media", file);
+        });
         formData.append('background_color', background);
         const token = await getToken();
         try {
@@ -82,17 +91,48 @@ const StoryModal = ({ setShowModal, fetchStories }) => {
                     <h2 className='text-lg font-semibold'>Create Story</h2>
                     <span className='w-10'></span>
                 </div>
-                <div className='rounded-lg h-96 flex items-center justify-center relative' style={{ backgroundColor: background }}>
+                <div className='rounded-lg h-96 flex items-center justify-center relative'
+                    style={{ backgroundColor: mode === "text" ? background : "transparent" }}>
                     {mode === 'text' && (
                         <textarea className='bg-transparent text-white w-full h-full p-6 text-lg resize-none focus:outline-none'
                             placeholder="What's on your mind ?" onChange={(e) => setText(e.target.value)} value={text} />
                     )}
-                    {mode === 'media' && previewUrl && (
-                        media?.type.startsWith('image') ? (
-                            <img src={previewUrl} className='object-contain max-h-full' alt="Image Preview" />
-                        ) : (
-                            <video src={previewUrl} className='object-contain max-h-full' />
-                        )
+                    {mode === 'media' && previewUrls.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2 max-h-full overflow-y-auto p-2 no-scrollbar">
+                            {previewUrls.map((url, i) => (
+                                <div key={i} className="relative group">
+                                    {media[i].type.startsWith('image') ? (
+                                        <img
+                                            src={url}
+                                            className="object-contain h-40 rounded"
+                                            alt="preview"
+                                        />
+                                    ) : (
+                                        <video
+                                            src={url}
+                                            className="object-contain h-40 rounded"
+                                            controls
+                                        />
+                                    )}
+
+                                    {/* X button appears on hover */}
+                                    <button
+                                        onClick={() => {
+                                            const newMedia = [...media];
+                                            const newPreviews = [...previewUrls];
+                                            newMedia.splice(i, 1);
+                                            newPreviews.splice(i, 1);
+                                            setMedia(newMedia);
+                                            setPreviewUrls(newPreviews);
+                                        }}
+                                        className='absolute hidden group-hover:flex top-0 left-0 right-0 bottom-0 bg-black/20
+                                            rounded-lg items-center justify-center transition-all duration-300'
+                                    >
+                                        <X className='w-5 h-5 text-white cursor-pointer' />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
                 <div className='flex mt-4 gap-2'>
@@ -102,13 +142,13 @@ const StoryModal = ({ setShowModal, fetchStories }) => {
                     ))}
                 </div>
                 <div className='flex gap-2 mt-4'>
-                    <button onClick={() => { setMode('text'); setMedia(null); setPreviewUrl(null) }} className={`flex-1 flex items-center 
+                    <button onClick={() => { setMode('text'); setMedia([]); setPreviewUrls([]) }} className={`flex-1 flex items-center 
                     justify-center gap-2 p-2 rounded ${mode === 'text' ? 'bg-white text-black' : 'bg-zinc-800'} cursor-pointer`}>
                         <TextIcon size={18} /> Text
                     </button>
                     <label className={`flex-1 flex items-center justify-center gap-2 p-2 rounded cursor-pointer ${mode === 'media' ?
                         'bg-white text-black' : 'bg-zinc-800'} cursor-pointer`}>
-                        <input type="file" accept='image/*, video/*' className='hidden' onChange={handleMediaUpload} />
+                        <input type="file" accept='image/*, video/*' multiple className='hidden' onChange={handleMediaUpload} />
                         <Upload size={18} /> Photo/Video
                     </label>
                 </div>

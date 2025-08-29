@@ -18,11 +18,11 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('Posts');
   const [showEdit, setShowEdit] = useState(false);
   const { getToken } = useAuth();
-  const currentUser = useSelector((state)=>state.user.value);
+  const currentUser = useSelector((state) => state.user.value);
   const fetchUser = async (profileId) => {
     const token = await getToken();
     try {
-      const { data } = await api.post('/api/user/profiles', {profileId}, {headers: {Authorization: `Bearer ${token}`}});
+      const { data } = await api.post('/api/user/profiles', { profileId }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         setUser(data.profile);
         setPosts(data.posts);
@@ -31,7 +31,7 @@ const Profile = () => {
       }
     } catch (error) {
       toast.error(error.message);
-    }    
+    }
   }
   useEffect(() => {
     if (profileId) {
@@ -65,7 +65,7 @@ const Profile = () => {
           {/* Posts */}
           {activeTab === 'Posts' && (
             <div className='mt-6 flex flex-col items-center gap-6'>
-              {posts.map((post)=>(
+              {posts.map((post) => (
                 <PostCard key={post._id} post={post}/>
               ))}
             </div>
@@ -73,11 +73,11 @@ const Profile = () => {
           {/* Media */}
           {activeTab === 'Media' && (
             <div className='flex flex-wrap mt-6 max-w-6xl'>
-              {posts.filter((post)=>post.image_urls.length > 0).map((post)=>(
+              {posts.filter((post) => post.image_urls.length > 0).map((post) => (
                 <>
-                  {post.image_urls.map((image, index)=>(
+                  {post.image_urls.map((image, index) => (
                     <Link target='_blank' to={image} key={image} className='relative group'>
-                      <img src={image} key={index} className='w-64 aspect-video object-cover' alt="Post Pics"/>
+                      <img src={image} key={index} className='w-64 aspect-video object-cover' alt="Post Pics" />
                       <p className='absolute bottom-0 right-0 text-xs p-1 px-3 backdrop-blur-xl text-background opacity-0 transition
                       duration-300 group-hover:opacity-100'>Posted {moment(post.createdAt).fromNow()}</p>
                     </Link>
@@ -89,7 +89,7 @@ const Profile = () => {
         </div>
       </div>
       {/* Edit Profile Modal */}
-      {showEdit && <ProfileModal setShowEdit={setShowEdit}/>}
+      {showEdit && <ProfileModal setShowEdit={setShowEdit} />}
     </div>
   ) : (
     <Loading />

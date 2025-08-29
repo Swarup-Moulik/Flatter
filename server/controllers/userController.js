@@ -11,7 +11,7 @@ export const getUserData = async (req, res) => {
         const { userId } = req.auth();
         const user = await User.findById(userId);
         if (!user) {
-            res.json({
+            return res.json({
                 success: false,
                 message: 'User not found'
             })
@@ -43,11 +43,15 @@ export const updateUserData = async (req, res) => {
                 username = tempUser.username;
             }
         }
+        const safeFullName = full_name?.trim() || [tempUser.first_name, tempUser.last_name]
+            .map(name => name?.trim())
+            .filter(Boolean)
+            .join(" ") || tempUser.username;
         const updatedData = {
             username,
             bio,
             location,
-            full_name
+            full_name: safeFullName
         }
         const profile = req.files.profile && req.files.profile[0];
         const cover = req.files.cover && req.files.cover[0];
@@ -240,6 +244,9 @@ export const getUserConnections = async (req, res) => {
         const { userId } = req.auth();
 
         const user = await User.findById(userId).populate('connections followers following');
+        if (!user) {
+            return res.json({ success: false, message: 'User not found' });
+        }
         const connections = user.connections;
         const following = user.following;
         const followers = user.followers;

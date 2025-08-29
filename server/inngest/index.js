@@ -21,10 +21,14 @@ const syncUserCreation = inngest.createFunction(
         if (user) {
             username += Math.floor(Math.random() * 10000);
         }
+        const fullName = [first_name, last_name]
+            .map(name => name?.trim())   // Remove extra spaces
+            .filter(Boolean)             // Remove null, undefined, or empty strings
+            .join(" ") || username;      // Fallback to username if both names missing
         const userData = {
             _id: id,
             email: email_addresses[0].email_address,
-            full_name: first_name + " " + last_name,
+            full_name: fullName,
             profile_picture: image_url,
             username
         }
@@ -48,9 +52,13 @@ const syncUserUpdation = inngest.createFunction(
     { event: 'clerk/user.updated' },
     async ({ event }) => {
         const { id, first_name, last_name, email_addresses, image_url } = event.data;
+        const fullName = [first_name, last_name]
+            .map(name => name?.trim())   // Remove extra spaces
+            .filter(Boolean)             // Remove null, undefined, or empty strings
+            .join(" ") || username;      // Fallback to username if both names missing
         const updatedUserData = {
             email: email_addresses[0].email_address,
-            full_name: first_name + " " + last_name,
+            full_name: fullName,
             profile_picture: image_url,
         }
         await User.findByIdAndUpdate(id, updatedUserData);
@@ -79,14 +87,14 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
                 to: connection.to_user_id.email,
                 subject,
                 body
-            }) 
+            })
         });
         const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await step.sleepUntil("wait-for-24-hours", in24Hours);
         await step.run('send-connection-request-reminder', async () => {
             const connection = await Connection.findById(connectionId).populate('from_user_id to_user_id');
             if (connection.status === 'accepted') {
-                return {message: 'Already Accepted'};
+                return { message: 'Already Accepted' };
             }
             const subject = `New Connection Request`;
             const body = `
@@ -102,8 +110,8 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
                 to: connection.to_user_id.email,
                 subject,
                 body
-            }) 
-            return {message: 'Reminder sent.'}
+            })
+            return { message: 'Reminder sent.' }
         })
     }
 )
@@ -112,25 +120,25 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
 const deleteStory = inngest.createFunction(
     { id: 'story-delete' },
     { event: 'app/story.delete' },
-    async ({event, step}) => {
+    async ({ event, step }) => {
         const { storyId } = event.data;
         const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await step.sleepUntil("wait-for-24-hours", in24Hours);
         await step.run('delete-story', async () => {
             await Story.findByIdAndDelete(storyId);
-            return {message: 'Story Deleted'};
+            return { message: 'Story Deleted' };
         })
     }
 )
 
 const sendNotificationOfUnseenMessages = inngest.createFunction(
-    {id: 'send-unseen-messages-notification'},
-    {cron: "TZ=Asia/Kolkata 0 12 * * *"}, //Everyday at 12 pm
+    { id: 'send-unseen-messages-notification' },
+    { cron: "TZ=Asia/Kolkata 0 12 * * *" }, //Everyday at 12 pm
     async ({ step }) => {
-        const messages = await Message.find({seen: false}).populate('to_user_id');
+        const messages = await Message.find({ seen: false }).populate('to_user_id');
         const unseenCount = {};
-        messages.map((message)=>{
-            unseenCount[message.to_user_id._id] = (unseenCount[message.to_user_id._id] || 0) + 1;            
+        messages.map((message) => {
+            unseenCount[message.to_user_id._id] = (unseenCount[message.to_user_id._id] || 0) + 1;
         })
         for (const userId in unseenCount) {
             const user = await User.findById(userId);
@@ -150,7 +158,7 @@ const sendNotificationOfUnseenMessages = inngest.createFunction(
                 body
             })
         }
-        return {message: 'Notification sent'}
+        return { message: 'Notification sent' }
     }
 )
 

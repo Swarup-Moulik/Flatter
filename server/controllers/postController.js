@@ -5,49 +5,54 @@ import User from '../models/user.js';
 
 //Add Post
 export const addPost = async (req, res) => {
-    try {
-        const { userId } = req.auth();
-        const { content, post_type } = req.body;
-        const images = req.files;
+  try {
+    const { userId } = req.auth();
+    const { content, post_type } = req.body;
+    const files = req.files; // can be images or videos
 
-        let image_urls = [];
-        if (images.length) {
-            image_urls = await Promise.all(images.map(async (image) => {
-                const fileBuffer = fs.readFileSync(image.path);
-                const response = await imagekit.upload({
-                    file: fileBuffer,
-                    fileName: image.originalname,
-                    folder: 'posts'
-                })
-                const url = imagekit.url({
-                    path: response.filePath,
-                    transformation: [
-                        { quality: 'auto' },
-                        { format: 'webp' },
-                        { width: '1280' }
-                    ]
-                })
-                return url;
-            }))
+    let media_urls = [];
+    if (files?.length) {
+      media_urls = await Promise.all(files.map(async (file) => {
+        const fileBuffer = fs.readFileSync(file.path);
+        const response = await imagekit.upload({
+          file: fileBuffer,
+          fileName: file.originalname,
+          folder: "posts",
+        });
+        // for images you can create a transformed URL
+        if (file.mimetype.startsWith("image/")) {
+          return imagekit.url({
+            path: response.filePath,
+            transformation: [
+              { quality: "auto" },
+              { format: "webp" },
+              { width: "1280" },
+            ],
+          });
         }
-        await Post.create({
-            user: userId,
-            content,
-            image_urls,
-            post_type
-        })
-        res.json({
-            success: true,
-            message: 'Post created successfully'
-        })
-    } catch (error) {
-        console.log(error);
-        res.json({
-            success: false,
-            message: error.message
-        })
+        // for videos just return the raw URL
+        return response.url;
+      }));
     }
-}
+    await Post.create({
+      user: userId,
+      content,
+      media_urls, // works for both images and videos
+      post_type,
+    });
+    res.json({
+      success: true,
+      message: "Post created successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 //Get Post
 export const getFeedPosts = async (req, res) => {
@@ -94,6 +99,25 @@ export const likePosts = async (req, res) => {
                 message: 'Post liked'
             })
         }
+    } catch (error) {
+        console.log(error);
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+//Delete Post
+export const deletePost = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { postId } = req.body
+        const post = await Post.findByIdAndDelete(postId);
+        res.json({
+            success: true,
+            message: 'Post Deleted Successfully'
+        })
     } catch (error) {
         console.log(error);
         res.json({

@@ -29,55 +29,74 @@ export const sseController = (req, res) => {
         console.log('Client disconnected');
     })
 }
-
+ 
 //Send Message
 export const sendMessage = async (req, res) => {
     try {
         const { userId } = req.auth();
         const { to_user_id, text } = req.body;
-        const image = req.file;
-        let media_url = '';
-        let message_type = image ? 'image' : 'text';
+        const files = req.files;
+        let message_type = [];
+        let media_url = [];
 
-        if (message_type === 'image') {
-            const fileBuffer = fs.readFileSync(image.path);
-            const response = await imagekit.upload({
-                file: fileBuffer,
-                fileName: image.originalname,
-            })
-            media_url = imagekit.url({
-                path: response.filePath,
-                transformation: [
-                    { quality: 'auto' },
-                    { format: 'webp' },
-                    { width: '1280' }
-                ]
-            })
+        // Include text type if text exists
+        if (text) message_type.push('text');
+
+        // Process media files
+        if (files?.length) {
+            for (const file of files) {
+                const fileBuffer = fs.readFileSync(file.path);
+                const response = await imagekit.upload({
+                    file: fileBuffer,
+                    fileName: file.originalname,
+                    folder: "posts",
+                });
+
+                if (file.mimetype.startsWith("image/")) {
+                    media_url.push(imagekit.url({
+                        path: response.filePath,
+                        transformation: [
+                            { quality: "auto" },
+                            { format: "webp" },
+                            { width: "1280" },
+                        ],
+                    }));
+                    message_type.push('image');
+                } else if (file.mimetype.startsWith("video/")) {
+                    media_url.push(response.url);
+                    message_type.push('video');
+                }
+            }
         }
+
+        // Create the final message
         const message = await Message.create({
             from_user_id: userId,
             to_user_id,
             text,
             message_type,
-            media_url
-        })
+            media_url,
+            status: 'sent'
+        });
+
+        // Send SSE to receiver
+        if (connections[to_user_id]) {
+            connections[to_user_id].write(`data: ${JSON.stringify(message)}\n\n`);
+        }
+
         res.json({
             success: true,
-            message
-        })
-        //Send message to to_user_id using server side event
-        const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
-        if (connections[to_user_id]) {
-            connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
-        }
+            message,
+        });
+
     } catch (error) {
         console.log(error);
         res.json({
             success: false,
             message: error.message
-        })
+        });
     }
-}
+};
 
 //Get chat messages
 export const getChatMessages = async (req, res) => {
@@ -87,12 +106,13 @@ export const getChatMessages = async (req, res) => {
 
         const messages = await Message.find({
             $or: [
-                {from_user_id: userId, to_user_id},
-                {from_user_id: to_user_id, to_user_id: userId}
-            ]
-        }).sort({createdAt: -1})
+                { from_user_id: userId, to_user_id },
+                { from_user_id: to_user_id, to_user_id: userId }
+            ],
+            deleted_for: { $ne: userId }
+        }).sort({ createdAt: -1 })
         //Mark messages as seen
-        await Message.updateMany({from_user_id: to_user_id, to_user_id: userId}, {seen: true});
+        await Message.updateMany({ from_user_id: to_user_id, to_user_id: userId }, { seen: true });
         res.json({
             success: true,
             messages
@@ -106,10 +126,11 @@ export const getChatMessages = async (req, res) => {
     }
 }
 
+// Recent Messages
 export const getUserRecentMessages = async (req, res) => {
     try {
-        const { userId } = req.auth();       
-        const messages = await Message.find({to_user_id: userId}).populate('from_user_id to_user_id').sort({createdAt: -1});
+        const { userId } = req.auth();
+        const messages = await Message.find({ to_user_id: userId }).populate('from_user_id to_user_id').sort({ createdAt: -1 });
         res.json({
             success: true,
             messages
@@ -122,3 +143,42 @@ export const getUserRecentMessages = async (req, res) => {
         })
     }
 }
+
+// Unsend Messages
+export const unsendChatMessage = async (req, res) => {
+    try {
+        const { messageId } = req.body;
+        const messages = await Message.findByIdAndDelete(messageId);
+        res.json({
+            success: true,
+            message: 'Message unsent'
+        })
+    } catch (error) {
+        console.log(error);
+        res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+//Delete for reciever
+export const deleteRecieverMessage = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { messageId } = req.body;
+        const message = await Message.findById(messageId);
+        if (!message) return res.json({ success: false, message: "Message not found" });
+        if (!message.deleted_for.includes(userId)) {
+            message.deleted_for.push(userId);
+            await message.save();
+        }
+        res.json({ success: true, message: "Message deleted for you" });
+    } catch (error) {
+        console.log(error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
