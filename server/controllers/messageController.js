@@ -1,6 +1,7 @@
 import fs from 'fs';
 import imagekit from '../configs/imagekit.js';
 import Message from '../models/message.js';
+import User from '../models/user.js';
 
 //Create an empty object to store server side event connections.
 const connections = {};
@@ -29,7 +30,7 @@ export const sseController = (req, res) => {
         console.log('Client disconnected');
     })
 }
- 
+
 //Send Message
 export const sendMessage = async (req, res) => {
     try {
@@ -128,21 +129,38 @@ export const getChatMessages = async (req, res) => {
 
 // Recent Messages
 export const getUserRecentMessages = async (req, res) => {
-    try {
-        const { userId } = req.auth();
-        const messages = await Message.find({ to_user_id: userId }).populate('from_user_id to_user_id').sort({ createdAt: -1 });
-        res.json({
-            success: true,
-            messages
-        })
-    } catch (error) {
-        console.log(error);
-        res.json({
-            success: false,
-            message: error.message
-        })
-    }
-}
+  try {
+    const { userId } = req.auth();
+
+    // ✅ fetch current user with connections
+    const currentUser = await User.findById(userId).select("connections");
+
+    // ✅ fetch messages sent to this user
+    const messages = await Message.find({ to_user_id: userId })
+      .populate("from_user_id to_user_id")
+      .sort({ createdAt: -1 });
+
+    // ✅ filter only messages from connected users
+    const filteredMessages = messages.filter((msg) =>
+      currentUser.connections.includes(
+        msg.from_user_id._id.toString() === userId
+          ? msg.to_user_id._id.toString()
+          : msg.from_user_id._id.toString()
+      )
+    );
+
+    res.json({
+      success: true,
+      messages: filteredMessages, // return filtered
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // Unsend Messages
 export const unsendChatMessage = async (req, res) => {

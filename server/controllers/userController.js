@@ -249,9 +249,7 @@ export const getUserConnections = async (req, res) => {
         }
         const connections = user.connections;
         const following = user.following;
-        const followers = user.followers;
-        /*const pendingConnections = (await Connection.find({ to_user_id: userId, status: 'pending' }).populate('from_user_id')).map(
-            connection => connection.from_user_id);*/
+        const followers = user.followers;        
         const incomingPending = await Connection.find({
             to_user_id: userId,
             status: 'pending'
@@ -372,3 +370,44 @@ export const getUserProfiles = async (req, res) => {
         })
     }
 }
+
+//Remove Connection
+export const removeConnection = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { id } = req.body; // id = other user's id
+
+        // Check if there’s an accepted connection between these two
+        const connection = await Connection.findOne({
+            $or: [
+                { from_user_id: userId, to_user_id: id, status: 'accepted' },
+                { from_user_id: id, to_user_id: userId, status: 'accepted' }
+            ]
+        });
+
+        if (!connection) {
+            return res.json({
+                success: false,
+                message: 'No active connection found.'
+            });
+        }
+
+        // Remove each other from "connections" array
+        await User.findByIdAndUpdate(userId, { $pull: { connections: id } });
+        await User.findByIdAndUpdate(id, { $pull: { connections: userId } });
+
+        // Delete the connection document
+        await Connection.findByIdAndDelete(connection._id);
+
+        res.json({
+            success: true,
+            message: 'Connection removed successfully.'
+        });
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};

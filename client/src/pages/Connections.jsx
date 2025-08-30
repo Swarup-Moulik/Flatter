@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, UserCheck, UserPlus, UserRoundPen, Users } from 'lucide-react';
+import { MessageSquare, UserCheck, UserPlus, UserRoundPen, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/clerk-react';
@@ -35,11 +35,26 @@ const Connections = () => {
       toast.error(error.message);
     }
   };
-  
+
   const acceptConnection = async (userId) => {
     try {
       const token = await getToken();
       const { data } = await api.post('/api/user/accept', { id: userId }, { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        toast.success(data.message);
+        dispatch(fetchConnections(token));
+      } else {
+        toast(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const removeConnection = async (userId) => {
+    try {
+      const token = await getToken();
+      const { data } = await api.post('/api/user/remove-connection', { id: userId }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         toast.success(data.message);
         dispatch(fetchConnections(token));
@@ -123,7 +138,8 @@ const Connections = () => {
                         <p className="text-foreground">@{user.username}</p>
                         <div className="mt-3 flex gap-2">
                           <button
-                            className="w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700"
+                            className="w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 text-white
+                             hover:from-indigo-600 hover:to-purple-700 cursor-pointer"
                             onClick={() => acceptConnection(user._id)}
                           >
                             Accept
@@ -147,7 +163,7 @@ const Connections = () => {
                         <p className="text-foreground/90">@{user.username}</p>
                         <div className="mt-3 flex gap-2">
                           <button
-                            className="w-full p-2 text-sm rounded bg-border/55 hover:bg-border/65"
+                            className="w-full p-2 text-sm rounded bg-border/55 hover:bg-border/65 cursor-pointer"
                             onClick={() => cancelRequest(user._id)}
                           >
                             Cancel Request
@@ -162,7 +178,15 @@ const Connections = () => {
           ) : (
             // DEFAULT RENDER FOR OTHER TABS
             dataArray.find((item) => item.label === currentTab).value.map((user) => (
-              <div key={user._id} className='w-full max-w-88 flex gap-5 p-6 bg-background shadow rounded-md'>
+              <div key={user._id} className='w-full max-w-88 flex gap-5 p-6 bg-background shadow rounded-md relative'>
+                {currentTab === 'Connections' && (
+                  <button
+                    className="absolute top-2 right-2 text-primary hover:text-red-500"
+                    onClick={() => removeConnection(user._id)}
+                  >
+                    <X className="w-5 h-6 cursor-pointer" />
+                  </button>
+                )}
                 <img src={user.profile_picture} className='rounded-full w-12 h-12 shadow-md mx-auto' alt="User Profile" />
                 <div className='flex-1'>
                   <p className='font-medium text-foreground'>{user.full_name}</p>
