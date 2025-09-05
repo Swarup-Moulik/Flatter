@@ -1,4 +1,3 @@
-import React from 'react'
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom'
 
@@ -18,7 +17,7 @@ const Notifications = ({ t, message }) => {
                 </div>
             </div>
             <div className='flex border-l border-gray-200'>
-                <button className='p-4 text-indigo-600 font-semibold cursor-pointer' onClick={()=>{
+                <button className='p-4 text-orange-600 font-semibold cursor-pointer' onClick={()=>{
                     navigate(`/messages/${message.from_user_id._id}`);
                     toast.dismiss(t.id)
                 }}>

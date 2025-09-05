@@ -27,7 +27,7 @@ const Theme = () => {
     return (
         <button onClick={toggletheme}
             className="p-2 rounded-full transition-colors duration-300 focus:outline-hidden cursor-pointer">
-                {isDark ? <Sun className='w-6 h-6 text-yellow-300' /> : <Moon className='w-6 h-6 text-blue-900' />}
+                {isDark ? <Sun className='w-6 h-6 text-amber-500' /> : <Moon className='w-6 h-6 text-amber-300' />}
         </button>
     )
 }

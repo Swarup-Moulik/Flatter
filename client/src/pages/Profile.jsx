@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { dummyPostsData, dummyUserData } from '../assets/assets';
 import Loading from '../components/Loading';
 import UserProfileInfo from '../components/UserProfileInfo';
 import PostCard from '../components/PostCard';
@@ -41,12 +40,12 @@ const Profile = () => {
     }
   }, [profileId, currentUser])
   return user ? (
-    <div className='relative h-full overflow-y-scroll bg-gradient-to-b from-transition1 to-background p-6'>
+    <div className='relative h-full overflow-y-scroll bg-gradient-to-b from-transition1 via-transition2 to-background p-6'>
       <div className='max-w-3xl mx-auto'>
         {/* Profile Card */}
         <div className='bg-background rounded-2xl shadow overflow-hidden'>
           {/* Cover Photo */}
-          <div className='h-40 md:h-56 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200'>
+          <div className='h-40 md:h-56 bg-gradient-to-r from-amber-300 via-orange-300 to-yellow-200'>
             {user.cover_photo && <img src={user.cover_photo} className='w-full h-full object-cover' alt="Cover Photo" />}
           </div>
           {/* User Info */}
@@ -57,7 +56,7 @@ const Profile = () => {
           <div className='bg-background rounded-xl shadow p-1 flex max-w-md mx-auto'>
             {['Posts', 'Media', 'Likes'].map((tab) => (
               <button key={tab} className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer
-              ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-foreground hover:text-primary'}`} onClick={() => setActiveTab(tab)}>
+              ${activeTab === tab ? 'futton' : 'text-foreground hover:text-primary'}`} onClick={() => setActiveTab(tab)}>
                 {tab}
               </button>
             ))}
@@ -73,12 +72,12 @@ const Profile = () => {
           {/* Media */}
           {activeTab === 'Media' && (
             <div className='flex flex-wrap mt-6 max-w-6xl'>
-              {posts.filter((post) => post.image_urls.length > 0).map((post) => (
+              {posts.filter((post) => post.media_urls.length > 0).map((post) => (
                 <>
-                  {post.image_urls.map((image, index) => (
+                  {post.media_urls.map((image, index) => (
                     <Link target='_blank' to={image} key={image} className='relative group'>
                       <img src={image} key={index} className='w-64 aspect-video object-cover' alt="Post Pics" />
-                      <p className='absolute bottom-0 right-0 text-xs p-1 px-3 backdrop-blur-xl text-background opacity-0 transition
+                      <p className='absolute bottom-0 right-0 text-xs p-1 px-3 backdrop-blur-xl text-white opacity-0 transition
                       duration-300 group-hover:opacity-100'>Posted {moment(post.createdAt).fromNow()}</p>
                     </Link>
                   ))}

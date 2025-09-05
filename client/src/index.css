@@ -13,24 +13,28 @@
   --color-primary: hsl(var(--primary));
   --color-foreground: hsl(var(--foreground));
   --color-transition1: hsl(var(--transition1));
+  --color-transition2: hsl(var(--transition2));
 }
 
 @layer base {
   :root {
-    --border: 218 13.6% 84.1%; /* Light gray border */
-    --background: 0 0% 100%; /* Clean white background */
-    --foreground: 217 21.2% 26.9%; /* Gray text for contrast */
-    --primary: 0 0% 0%; /* Black Text */
-    --transition1: 248, 100%, 95%;  /* Indigo-50*/
-  }
+  --border: 218 13.6% 84.1%;      /* Light gray border */
+  --background: 0 0% 100%;        /* Clean white background */
+  --foreground: 217 21.2% 26.9%;  /* Gray text for contrast */
+  --primary: 0 0% 0%;             /* Black text */
+  --transition1: 0 0% 95%;      
+  --transition2: 0 0% 95%;     
+}
 
-  .dark {
-    --border: 218 13.6% 84.1%;
-    --background: 0 0% 3%;
-    --foreground: 218 13.6% 84.1%;
-    --primary: 0 0% 100%;
-    --transition1: 248, 40%, 15%;
-  }
+.dark {
+  --border: 218 13.6% 84.1%;
+  --background: 0 0% 4%;          /* Dark mode background */
+  --foreground: 218 13.6% 84.1%;  /* Gray text */
+  --primary: 0 0% 100%;           /* White text */
+  --transition1: 38 96% 45%;      /* Orange-500 (deep saffron-orange) */
+  --transition2: 27 96% 40%;      /* Amber-400 (golden glow) */
+}
+
   * {
     @apply border-border;
   }
@@ -43,4 +47,8 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+}
+
+@utility futton {
+  @apply bg-gradient-to-r from-orange-400 to-rose-500 hover:from-orange-500 hover:to-rose-600 text-white cursor-pointer;
 }

@@ -13,7 +13,6 @@ const Connections = () => {
   const { connections, pendingConnections, followers, following } = useSelector((state) => state.connections);
   const dispatch = useDispatch();
   const { getToken } = useAuth();
-
   const dataArray = [
     { label: 'Followers', value: followers, icon: Users },
     { label: 'Following', value: following, icon: UserCheck },
@@ -84,16 +83,14 @@ const Connections = () => {
   useEffect(() => {
     getToken().then((token) => dispatch(fetchConnections(token)));
   }, []);
-
   return (
-    <div className='min-h-screen bg-gradient-to-b from-transition1 to-background'>
+    <div className='min-h-screen bg-gradient-to-b from-transition1 via-transition2 to-background'>
       <div className='max-w-6xl mx-auto p-6'>
         {/* Title */}
         <div className='mb-8'>
           <h1 className='text-3xl font-bold text-primary mb-2'>Connections</h1>
           <p className='text-foreground'>Manage your network and discover new connections.</p>
         </div>
-
         {/* Counts */}
         <div className='mb-8 flex flex-wrap gap-6'>
           {dataArray.map((item, index) => (
@@ -104,7 +101,6 @@ const Connections = () => {
             </div>
           ))}
         </div>
-
         {/* Tabs */}
         <div className='inline-flex flex-wrap items-center border border-border/40 rounded-md p-1 bg-background shadow-sm'>
           {dataArray.map((tab) => (
@@ -119,10 +115,8 @@ const Connections = () => {
             </button>
           ))}
         </div>
-
         {/* Connections */}
         <div className='flex flex-wrap gap-6 mt-6'>
-
           {/* PENDING SPECIAL CASE */}
           {currentTab === 'Pending' ? (
             <div className="flex flex-col gap-6 w-full">
@@ -138,8 +132,7 @@ const Connections = () => {
                         <p className="text-foreground">@{user.username}</p>
                         <div className="mt-3 flex gap-2">
                           <button
-                            className="w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 text-white
-                             hover:from-indigo-600 hover:to-purple-700 cursor-pointer"
+                            className="w-full p-2 text-sm rounded bg-gradient-to-r futton"
                             onClick={() => acceptConnection(user._id)}
                           >
                             Accept
@@ -150,7 +143,6 @@ const Connections = () => {
                   ))}
                 </div>
               )}
-
               {/* Outgoing */}
               {pendingConnections.outgoing?.length > 0 && (
                 <div className="mt-6">
@@ -194,7 +186,7 @@ const Connections = () => {
                   <p className='text-sm text-foreground'>{user.bio ? `${user.bio.slice(0, 30)}...` : 'No bio'}</p>
                   <div className='flex max-sm:flex-col gap-2 mt-4'>
                     <button
-                      className='w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white'
+                      className='w-full p-2 text-sm rounded futton'
                       onClick={() => navigate(`/profile/${user._id}`)}
                     >
                       View Profile
@@ -220,7 +212,6 @@ const Connections = () => {
               </div>
             ))
           )}
-
         </div>
       </div>
     </div>

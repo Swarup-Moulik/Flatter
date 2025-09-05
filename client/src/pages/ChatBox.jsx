@@ -1,5 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { dummyMessagesData, dummyUserData } from '../assets/assets'
+import { useRef, useState, useEffect } from 'react'
 import { Image, SendHorizontal, EllipsisVertical, Trash, X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -126,7 +125,7 @@ const ChatBox = () => {
   };
   return user && (
     <div className='flex flex-col h-screen'>
-      <div className='flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-transition1 to-background border-b 
+      <div className='flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-transition2 via-transition1 to-background border-b 
       border-border/70'>
         <img src={user.profile_picture} alt="User Profile Picture" className='size-8 rounded-full' />
         <div>
@@ -134,7 +133,7 @@ const ChatBox = () => {
           <p className='text-sm text-foreground -mt-1.5'>@{user.username}</p>
         </div>
       </div>
-      <div className='p-5 md:px-10 h-full overflow-y-scroll bg-gradient-to-b from-transition1 to-background'>
+      <div className='p-5 md:px-10 h-full overflow-y-scroll bg-gradient-to-b from-transition2/75 to-background'>
         <div className='space-y-4 max-w-4xl mx-auto'>
           {messages.toSorted((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((message, index) => (
             <div key={index} className={`flex flex-col ${message.to_user_id !== user._id ? 'items-start' : 'items-end'}`}>
@@ -250,7 +249,7 @@ const ChatBox = () => {
             />
           </label>
           <button
-            className="bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-800 p-2 active:scale-95 cursor-pointer text-white rounded-full"
+            className="futton p-2 active:scale-95 rounded-full"
             onClick={sendMessage}
           >
             <SendHorizontal size={18} />

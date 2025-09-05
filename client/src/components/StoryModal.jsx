@@ -1,13 +1,13 @@
 import { useAuth } from '@clerk/clerk-react';
 import { ArrowLeft, Sparkle, TextIcon, Upload, X } from 'lucide-react';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
 const StoryModal = ({ setShowModal, fetchStories }) => {
     const bgColors = ['#4f46e5', '#7c3aed', '#db2777', '#e11d48', '#ca8a04', '#0d9488'];
     const [mode, setMode] = useState('text');
-    const [background, setBackground] = useState(bgColors[0]);
+    const [background, setBackground] = useState(bgColors[3]);
     const [text, setText] = useState('');
     const [media, setMedia] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
@@ -153,8 +153,7 @@ const StoryModal = ({ setShowModal, fetchStories }) => {
                     </label>
                 </div>
                 <button onClick={() => toast.promise(handleCreateStory(), { loading: 'Saving...' })} className='flex items-center 
-                justify-center gap-2 text-white py-3 mt-4 w-full rounded bg-gradient-to-r active:scale-95 transition cursor-pointer
-                from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'>
+                justify-center gap-2 futton py-3 mt-4 w-full rounded bg-gradient-to-r active:scale-95 transition'>
                     <Sparkle size={18} /> Create Story
                 </button>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
@@ -50,7 +50,7 @@ const CreatePost = () => {
     setLoading(false);
   }
   return (
-    <div className='min-h-screen bg-gradient-to-b from-transition1 to-background'>
+    <div className='min-h-screen bg-gradient-to-b from-transition1 via-transition2 to-background'>
       <div className='max-w-6xl mx-auto p-6'>
         {/* Title */}
         <div className='mb-8'>
@@ -107,8 +107,8 @@ const CreatePost = () => {
               }
               setMedia([...media, ...e.target.files])
             }} />
-            <button className='text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700
-            active-95 transition text-white font-medium px-8 py-2 rounded-md cursor-pointer' disabled={loading} onClick={() => toast.promise(
+            <button className='text-sm futton active-95 transition  font-medium px-8 py-2 rounded-md' disabled={loading} 
+            onClick={() => toast.promise(
               handleSubmit, { loading: 'Uploading...', success: <p>Post Added</p>, error: <p>Post Not Added</p> }
             )} >
               Publish Post

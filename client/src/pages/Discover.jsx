@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import { dummyConnectionsData } from '../assets/assets';
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react';
 import UserCard from '../components/UserCard';
 import Loading from '../components/Loading';
@@ -37,7 +36,7 @@ const Discover = () => {
     })
   }, [])
   return (
-    <div className='min-h-screen bg-gradient-to-b from-transition1 to-background'>
+    <div className='min-h-screen bg-gradient-to-b from-transition1 via-transition2 to-background'>
       <div className='max-w-6xl mx-auto p-6'>
         {/* Title */}
         <div className='mb-8'>

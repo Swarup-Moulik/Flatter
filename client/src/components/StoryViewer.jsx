@@ -1,5 +1,5 @@
 import { BadgeCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const StoryViewer = ({ viewStoryGroup, setViewStoryGroup }) => {
   const [index, setIndex] = useState(0);

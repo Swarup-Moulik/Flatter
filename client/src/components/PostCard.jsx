@@ -1,7 +1,6 @@
 import { BadgeCheck, EllipsisVertical, Heart, MessageCircle, Share2, Trash } from 'lucide-react'
 import moment from 'moment'
-import React, { useState, useRef, useEffect } from 'react'
-import { dummyUserData } from '../assets/assets';
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useAuth, useUser } from '@clerk/clerk-react';

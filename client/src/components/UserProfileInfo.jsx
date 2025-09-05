@@ -1,6 +1,5 @@
 import { Calendar, MapPin, PenBox, Verified } from 'lucide-react'
 import moment from 'moment'
-import React from 'react'
 
 const UserProfileInfo = ({user, posts, profileId, setShowEdit}) => {
   return (

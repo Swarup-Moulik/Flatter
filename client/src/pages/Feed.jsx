@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { assets, dummyPostsData } from '../assets/assets';
+import { useEffect, useState } from 'react'
+import { assets } from '../assets/assets';
 import Loading from '../components/Loading';
 import StoriesBar from '../components/StoriesBar';
 import PostCard from '../components/PostCard';
@@ -32,7 +32,7 @@ const Feed = () => {
   }, [])
   return !loading ? (
     <div className='h-full overflow-y-scroll no-scrollbar py-10 xl:pr-5 flex items-start justify-center xl:gap-8 
-    bg-gradient-to-b from-transition1 to-background'>
+    bg-gradient-to-b from-transition1 via-transition2 to-background'>
       {/* Stories and Post List */}
       <div>
         <StoriesBar />

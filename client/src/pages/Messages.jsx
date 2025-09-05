@@ -1,5 +1,3 @@
-import React from 'react'
-import { dummyConnectionsData } from '../assets/assets'
 import { Eye, MessageSquare } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -9,7 +7,7 @@ const Messages = () => {
   const { connections } = useSelector((state)=>state.connections);
 
   return (
-    <div className='min-h-screen relative bg-gradient-to-b from-transition1 to-background'>
+    <div className='min-h-screen relative bg-gradient-to-b from-transition1 via-transition2 to-background'>
       <div className='max-w-6xl mx-auto p-6'>
         {/* Title */}
         <div className='mb-8'>

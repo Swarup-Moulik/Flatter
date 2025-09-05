@@ -1,5 +1,4 @@
-import React, { useState } from 'react'
-import { dummyUserData } from '../assets/assets'
+import { useState } from 'react'
 import { Pencil } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../features/user/userSlice';
@@ -66,8 +65,8 @@ const ProfileModal = ({ setShowEdit }) => {
                                 rounded-lg' onChange={(e) => setEditForm({ ...editForm, cover_photo: e.target.files[0] })} hidden />
                                 <div className='group/profile relative'>
                                     <img src={editForm.cover_photo ? URL.createObjectURL(editForm.cover_photo) : user.cover_photo}
-                                        className='w-80 h-40 rounded-lg object-cover mt-2 bg-gradient-to-r from-indigo-200 
-                                    via-purple-200 to-pink-200' alt="User Profile Picture" />
+                                        className='w-80 h-40 rounded-lg object-cover mt-2 bg-gradient-to-r from-amber-300 via-orange-300
+                                         to-yellow-200' alt="User Profile Picture" />
                                     <div className='absolute hidden group-hover/profile:flex top-0 left-0 right-0 bottom-0 bg-black/20
                                     rounded-lg items-center justify-center'>
                                         <Pencil className='w-5 h-5 text-white' />
@@ -106,8 +105,7 @@ const ProfileModal = ({ setShowEdit }) => {
                         <div className='flex justify-end space-x-3 pt-6'>
                             <button className='px-4 py-2 border rounded-lg text-foreground hover:bg-border/55
                             transition-colors cursor-pointer' type='button' onClick={() => setShowEdit(false)}>Cancel</button>
-                            <button className='px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg
-                            hover:from-indigo-600 hover:to-purple-700 transition-colors cursor-pointer' type='submit'>
+                            <button className='px-4 py-2 futton rounded-lg transition-colors cursor-pointer' type='submit'>
                                 Save Changes
                             </button>
                         </div>
