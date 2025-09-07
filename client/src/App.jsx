@@ -45,20 +45,22 @@ const App = () => {
 
   // EventSource for real-time messages
   useEffect(() => {
-    if (!user) return;
-
-    const eventSource = new EventSource(`${import.meta.env.VITE_BASEURL}/api/message/${user.id}`);
-    eventSource.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
-        dispatch(addMessage(message));
-      } else {
-        toast.custom((t) => <Notifications t={t} message={message} />, { position: "bottom-right" });
-      }
+    if (user) {
+      const eventSource = new EventSource(
+        `${import.meta.env.VITE_BASEURL}/api/message/${user.id}`
+      );
+      eventSource.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (pathnameRef.current === `/messages/${message.from_user_id._id}`) {
+          dispatch(addMessage(message));
+        } else {
+          toast.custom((t) => <Notifications t={t} message={message} />, { position: 'bottom-right' });
+        }
+      };
+      return () => eventSource.close();
     }
-
-    return () => eventSource.close();
   }, [user, dispatch]);
+
 
   if (!isLoaded) return <Loading />;
 

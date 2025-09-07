@@ -9,7 +9,7 @@ const connections = {};
 //Controller function for server side event endpoint
 export const sseController = (req, res) => {
     const { userId } = req.params;
-    console.log('New Client connected');
+    console.log('New Client connected :- ', userId);
 
     //Set server side event headers
     res.setHeader('Content-Type', 'text/event-stream');
@@ -21,7 +21,7 @@ export const sseController = (req, res) => {
     connections[userId] = res;
 
     //Send an initial event to the client
-    res.write('log: Connected to server side event stream\n\n');
+    res.write(`log: Connected to SSE stream\n\n`);
 
     //Handle Client Disconnection
     req.on('close', () => {
@@ -80,15 +80,15 @@ export const sendMessage = async (req, res) => {
             status: 'sent'
         });
 
-        // Send SSE to receiver
-        if (connections[to_user_id]) {
-            connections[to_user_id].write(`data: ${JSON.stringify(message)}\n\n`);
-        }
-
         res.json({
             success: true,
             message,
         });
+
+        const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
+        if(connections[to_user_id]){
+            connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+        }
 
     } catch (error) {
         console.log(error);
@@ -129,37 +129,37 @@ export const getChatMessages = async (req, res) => {
 
 // Recent Messages
 export const getUserRecentMessages = async (req, res) => {
-  try {
-    const { userId } = req.auth();
+    try {
+        const { userId } = req.auth();
 
-    // ✅ fetch current user with connections
-    const currentUser = await User.findById(userId).select("connections");
+        // ✅ fetch current user with connections
+        const currentUser = await User.findById(userId).select("connections");
 
-    // ✅ fetch messages sent to this user
-    const messages = await Message.find({ to_user_id: userId })
-      .populate("from_user_id to_user_id")
-      .sort({ createdAt: -1 });
+        // ✅ fetch messages sent to this user
+        const messages = await Message.find({ to_user_id: userId })
+            .populate("from_user_id to_user_id")
+            .sort({ createdAt: -1 });
 
-    // ✅ filter only messages from connected users
-    const filteredMessages = messages.filter((msg) =>
-      currentUser.connections.includes(
-        msg.from_user_id._id.toString() === userId
-          ? msg.to_user_id._id.toString()
-          : msg.from_user_id._id.toString()
-      )
-    );
+        // ✅ filter only messages from connected users
+        const filteredMessages = messages.filter((msg) =>
+            currentUser.connections.includes(
+                msg.from_user_id._id.toString() === userId
+                    ? msg.to_user_id._id.toString()
+                    : msg.from_user_id._id.toString()
+            )
+        );
 
-    res.json({
-      success: true,
-      messages: filteredMessages, // return filtered
-    });
-  } catch (error) {
-    console.error(error);
-    res.json({
-      success: false,
-      message: error.message,
-    });
-  }
+        res.json({
+            success: true,
+            messages: filteredMessages, // return filtered
+        });
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: error.message,
+        });
+    }
 };
 
 // Unsend Messages

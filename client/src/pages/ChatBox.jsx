@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/clerk-react';
 import api from '../api/axios';
 import { addMessage, fetchMessages, resetMessages } from '../features/messages/messagesSlice';
 import toast from 'react-hot-toast';
+import MessageViewer from '../components/MessageViewer';
 
 const ChatBox = () => {
   const { messages } = useSelector((state) => state.messages);
@@ -15,6 +16,8 @@ const ChatBox = () => {
   const [text, setText] = useState('');
   const [media, setMedia] = useState([]);
   const [user, setUser] = useState(null);
+  const [showMessage, setShowMessage] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const messagesEndRef = useRef(null);
   const connections = useSelector((state) => state.connections.connections);
   const [visible, setVisible] = useState(null);
@@ -84,21 +87,34 @@ const ChatBox = () => {
       toast.error(error.message);
     }
   }
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" })
-  }, [messages])
+  // Flatten all media URLs from messages for the viewer
+  const allMedia = messages
+    .flatMap(msg =>
+      msg.media_url.map((url, i) => ({
+        url,
+        type: msg.message_type[i],
+        messageId: msg._id, // useful if you need to know which message it belongs to
+      }))
+    );
+
   useEffect(() => {
     fetchUserMessages();
     return () => {
       dispatch(resetMessages())
     }
   }, [userId])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+  }, [messages])
+
   useEffect(() => {
     if (connections.length > 0) {
       const user = connections.find(connection => connection._id === userId);
       setUser(user);
     }
   }, [connections, userId])
+
   // Close menu when clicking outside (for touch/mobile)
   useEffect(() => {
     function handleClickOutside(e) {
@@ -175,6 +191,11 @@ const ChatBox = () => {
                             src={url}
                             className="w-full max-w-sm rounded-lg mb-1"
                             alt="Message media"
+                            onClick={() => {
+                              const indexInAll = allMedia.findIndex(m => m.url === url);
+                              setCurrentIndex(indexInAll);
+                              setShowMessage(true);
+                            }}
                           />
                         );
                       }
@@ -185,6 +206,11 @@ const ChatBox = () => {
                             src={url}
                             controls
                             className="w-full max-w-sm rounded-lg mb-1"
+                            onClick={() => {
+                              const indexInAll = allMedia.findIndex(m => m.url === url);
+                              setCurrentIndex(indexInAll);
+                              setShowMessage(true);
+                            }}
                           />
                         );
                       }
@@ -227,7 +253,7 @@ const ChatBox = () => {
         </div>
       )}
       {/* Input Bar */}
-      <div className="px-4 pt-2 bg-background z-100">
+      <div className="px-4 pt-2 bg-background z-20">
         <div className="flex items-center gap-3 pl-5 p-1.5 bg-background w-full max-w-xl mx-auto border border-border/70 shadow mb-5 rounded-full">
           <input
             type="text"
@@ -256,6 +282,15 @@ const ChatBox = () => {
           </button>
         </div>
       </div>
+      {/* Fullscreen Viewer */}
+      {showMessage && (
+        <MessageViewer
+          messages={allMedia.map(m => m.url)}   // pass only URLs
+          currentIndex={currentIndex}
+          setCurrentIndex={setCurrentIndex}
+          onClose={() => setShowMessage(false)}
+        />
+      )}
     </div>
   )
 }
