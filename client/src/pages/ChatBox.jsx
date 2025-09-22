@@ -306,13 +306,13 @@ const ChatBox = () => {
                 // Case 1: Receiver corrected the message
                 if (lastCorrection && lastCorrection.corrected_by !== message.from_user_id) {
                   return (
-                    <div className="mt-1 text-sm text-green-600 border-l-2 border-green-600 pl-2 bg-white p-1 rounded shadow">
+                    <div className="mt-1 text-sm text-green-600 border-l-2 border-green-600 pl-2 bg-background p-1 rounded shadow">
                       ✅ {lastCorrection.corrected_text}
                     </div>
                   );
                 }  
                 // Case 2: Sender (author) edited their own message
-                if (message.edited && message.from_user_id === userId) {
+                if (message.edited ) {
                   return (<span className="mt-1 text-xs text-green-600">✅ Edited</span>);
                 }             
                 return null;
