@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
-import { Image, SendHorizontal, EllipsisVertical, Trash, X } from 'lucide-react';
+import { Image, SendHorizontal, EllipsisVertical, Trash, X, Pencil, PencilIcon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import api from '../api/axios';
-import { addMessage, fetchMessages, resetMessages } from '../features/messages/messagesSlice';
+import { addMessage, fetchMessages, resetMessages, updateMessage } from '../features/messages/messagesSlice';
 import toast from 'react-hot-toast';
 import MessageViewer from '../components/MessageViewer';
 
@@ -21,6 +21,8 @@ const ChatBox = () => {
   const messagesEndRef = useRef(null);
   const connections = useSelector((state) => state.connections.connections);
   const [visible, setVisible] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editText, setEditText] = useState("");
   const fetchUserMessages = async () => {
     try {
       const token = await getToken();
@@ -65,7 +67,6 @@ const ChatBox = () => {
       const { data } = await api.post('/api/message/unsend', { messageId: id }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         toast.success(data.message);
-        dispatch(fetchMessages({ token, userId }));
       } else {
         throw new Error(data.message);
       }
@@ -79,7 +80,6 @@ const ChatBox = () => {
       const { data } = await api.post('/api/message/hide', { messageId: id }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.success) {
         toast.success(data.message);
-        dispatch(fetchMessages({ token, userId }));
       } else {
         throw new Error(data.message);
       }
@@ -87,6 +87,27 @@ const ChatBox = () => {
       toast.error(error.message);
     }
   }
+  const correctMessage = async (id, corrected_text) => {
+    try {
+      dispatch(updateMessage({ _id: id, text: corrected_text, edited: true }));
+      const token = await getToken();
+      const { data } = await api.post(
+        `/api/message/correct`,
+        { messageId: id, corrected_text },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        toast.success("Correction sent!");
+        setEditingMessageId(null);
+        dispatch(updateMessage(data.updatedMessage));
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   // Flatten all media URLs from messages for the viewer
   const allMedia = messages
     .flatMap(msg =>
@@ -162,23 +183,46 @@ const ChatBox = () => {
                   />
                   {visible === message._id && (
                     <div className={`absolute top-0 bg-background shadow-lg rounded-lg p-2 text-foreground z-10 mx-6 -mt-2 w-37
-                       ${message.to_user_id !== user._id ? 'left-0' : 'right-0'}`}>
-                      <button className="flex items-center gap-2 hover:text-primary text-sm">
+                        flex flex-col gap-2 ${message.to_user_id !== user._id ? 'left-0' : 'right-0'}`}>
+                      <button className="flex items-center gap-2 text-sm">
                         {message.to_user_id === user._id ? (
-                          <div onClick={() => unsendMessage(message._id)} className='flex gap-1 cursor-pointer'>
-                            <Trash className='w-5 h-5 text-red-600' /> Unsend
+                          <div className='flex flex-col gap-2'>
+                            <div onClick={() => unsendMessage(message._id)} className='flex gap-1 cursor-pointer hover:text-primary'>
+                              <Trash className='w-5 h-5 text-red-600' /> Unsend
+                            </div>
+                            <div
+                              onClick={() => {
+                                setEditingMessageId(message._id);
+                                setEditText(message.text); // prefill with original text
+                                setVisible(null); // close menu if open
+                              }}
+                              className='flex gap-1 cursor-pointer text-sm hover:text-primary'
+                            >
+                              <PencilIcon className='w-5 h-5 text-red-600' /> Edit
+                            </div>
                           </div>
-
                         ) : (
-                          <div onClick={() => deleteReceiverMessage(message._id)} className='flex gap-1 cursor-pointer'>
-                            <Trash className='w-5 h-5 text-red-600' /> Delete from me
+                          <div className='flex flex-col gap-2'>
+                            <div onClick={() => deleteReceiverMessage(message._id)} className='flex gap-1 cursor-pointer hover:text-primary'>
+                              <Trash className='w-5 h-5 text-red-600' /> Delete from me
+                            </div>
+                            <div
+                              onClick={() => {
+                                setEditingMessageId(message._id);
+                                setEditText(message.text); // prefill with original text
+                                setVisible(null); // close menu
+                              }}
+                              className='flex gap-1 cursor-pointer text-sm hover:text-primary'
+                            >
+                              <Pencil className='w-5 h-5 text-red-600' /> Correct
+                            </div>
                           </div>
                         )}
-                      </button>
+                      </button>                     
                     </div>
                   )}
                 </div>
-                <div className={`p-2 text-sm max-w-sm bg-background text-foreground rounded-lg shadow 
+                <div className={`p-2 text-sm max-w-sm bg-background text-foreground rounded-lg shadow flex flex-col
                   ${message.to_user_id !== user._id ? 'rounded-bl-none' : 'rounded-br-none'}`}>
                   {message.media_url?.length > 0 &&
                     message.media_url.map((url, i) => {
@@ -216,42 +260,98 @@ const ChatBox = () => {
                       }
                       return null;
                     })}
-                  {message.text && <p>{message.text}</p>}
+                  {editingMessageId === message._id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="flex-1 border border-border rounded px-2 py-1 text-sm bg-background text-foreground"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            correctMessage(message._id, editText);
+                            setEditingMessageId(null);
+                          } else if (e.key === "Escape") {
+                            setEditingMessageId(null);
+                          }
+                        }}
+                      />
+                      <button
+                        className="text-sm text-green-600 cursor-pointer"
+                        onClick={() => {
+                          correctMessage(message._id, editText);
+                          setEditingMessageId(null);
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="text-sm text-red-600 cursor-pointer"
+                        onClick={() => setEditingMessageId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    < p >
+                      {message.text}
+                    </p>
+                  )}
                 </div>
               </div>
+              {/* Edited/Correction display */}
+              {(message.edited || message.corrections?.length > 0) && (() => {
+                const lastCorrection = message.corrections?.[message.corrections.length - 1];               
+                // Case 1: Receiver corrected the message
+                if (lastCorrection && lastCorrection.corrected_by !== message.from_user_id) {
+                  return (
+                    <div className="mt-1 text-sm text-green-600 border-l-2 border-green-600 pl-2 bg-white p-1 rounded shadow">
+                      ✅ {lastCorrection.corrected_text}
+                    </div>
+                  );
+                }  
+                // Case 2: Sender (author) edited their own message
+                if (message.edited && message.from_user_id === userId) {
+                  return (<span className="mt-1 text-xs text-green-600">✅ Edited</span>);
+                }             
+                return null;
+              })()}
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
       </div>
       {/* Media Preview */}
-      {media.length > 0 && (
-        <div className="flex gap-2 px-4 pt-2 overflow-x-auto bg-background h-35 justify-center">
-          {media.map((file, index) => (
-            <div key={index} className="relative group/profile">
-              {file.type.startsWith('image/') ? (
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt="Preview"
-                  className="h-20 w-20 object-cover rounded-lg"
-                />
-              ) : file.type.startsWith('video/') ? (
-                <video
-                  src={URL.createObjectURL(file)}
-                  className="h-20 w-20 object-cover rounded-lg"
-                />
-              ) : null}
-              <button
-                type="button"
-                className="absolute hidden group-hover/profile:flex top-0 left-0 right-0 bottom-0 bg-black/20 rounded-lg items-center justify-center"
-                onClick={() => setMedia(media.filter((_, i) => i !== index))}
-              >
-                <X className='w-5 h-5 text-white cursor-pointer' />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {
+        media.length > 0 && (
+          <div className="flex gap-2 px-4 pt-2 overflow-x-auto bg-background h-35 justify-center">
+            {media.map((file, index) => (
+              <div key={index} className="relative group/profile">
+                {file.type.startsWith('image/') ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt="Preview"
+                    className="h-20 w-20 object-cover rounded-lg"
+                  />
+                ) : file.type.startsWith('video/') ? (
+                  <video
+                    src={URL.createObjectURL(file)}
+                    className="h-20 w-20 object-cover rounded-lg"
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  className="absolute hidden group-hover/profile:flex top-0 left-0 right-0 bottom-0 bg-black/20 rounded-lg items-center justify-center"
+                  onClick={() => setMedia(media.filter((_, i) => i !== index))}
+                >
+                  <X className='w-5 h-5 text-white cursor-pointer' />
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      }
       {/* Input Bar */}
       <div className="px-4 pt-2 bg-background z-20">
         <div className="flex items-center gap-3 pl-5 p-1.5 bg-background w-full max-w-xl mx-auto border border-border/70 shadow mb-5 rounded-full">
@@ -283,15 +383,17 @@ const ChatBox = () => {
         </div>
       </div>
       {/* Fullscreen Viewer */}
-      {showMessage && (
-        <MessageViewer
-          messages={allMedia.map(m => m.url)}   // pass only URLs
-          currentIndex={currentIndex}
-          setCurrentIndex={setCurrentIndex}
-          onClose={() => setShowMessage(false)}
-        />
-      )}
-    </div>
+      {
+        showMessage && (
+          <MessageViewer
+            messages={allMedia.map(m => m.url)}   // pass only URLs
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
+            onClose={() => setShowMessage(false)}
+          />
+        )
+      }
+    </div >
   )
 }
 

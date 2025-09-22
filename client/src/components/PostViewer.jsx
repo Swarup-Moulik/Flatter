@@ -18,7 +18,7 @@ const PostViewer = ({ posts, currentIndex, setCurrentIndex, onClose }) => {
   }, [posts.length, setCurrentIndex, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-500">
       {/* Close */}
       <button className="absolute top-5 right-5 text-white cursor-pointer" onClick={onClose}>
         <X className="w-8 h-8" />

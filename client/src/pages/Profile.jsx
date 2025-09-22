@@ -64,7 +64,7 @@ const Profile = () => {
           {/* Posts */}
           {activeTab === 'Posts' && (
             <div className='mt-6 flex flex-col items-center gap-6'>
-              {posts.map((post) => (
+              {posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((post) => (
                 <PostCard key={post._id} post={post}/>
               ))}
             </div>

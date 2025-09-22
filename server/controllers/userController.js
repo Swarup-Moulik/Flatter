@@ -33,7 +33,8 @@ export const getUserData = async (req, res) => {
 export const updateUserData = async (req, res) => {
     try {
         const { userId } = req.auth();
-        let { username, bio, location, full_name } = req.body;
+        let { username, bio, location, full_name, languages } = req.body;
+        let { native, fluent, learning } = req.body;
         const tempUser = await User.findById(userId);
         !username && (username = tempUser.username);
         if (tempUser.username !== username) {
@@ -52,6 +53,18 @@ export const updateUserData = async (req, res) => {
             bio,
             location,
             full_name: safeFullName
+        }
+        // 👇 Handle languages if provided
+        if (native || fluent || learning) {
+            try {
+                updatedData.languages = {
+                    native: native ? JSON.parse(native) : tempUser.languages.native,
+                    fluent: fluent ? JSON.parse(fluent) : tempUser.languages.fluent,
+                    learning: learning ? JSON.parse(learning) : tempUser.languages.learning
+                };
+            } catch (err) {              
+                updatedData.languages = tempUser.languages; // fallback
+            }
         }
         const profile = req.files.profile && req.files.profile[0];
         const cover = req.files.cover && req.files.cover[0];
@@ -106,15 +119,26 @@ export const updateUserData = async (req, res) => {
 export const discoverUsers = async (req, res) => {
     try {
         const { userId } = req.auth();
-        const { input } = req.body;
-        const allUsers = await User.find({
-            $or: [
-                { username: new RegExp(input, 'i') },
-                { email: new RegExp(input, 'i') },
-                { full_name: new RegExp(input, 'i') },
-                { location: new RegExp(input, 'i') },
-            ]
-        })
+        const { input, filter } = req.body;
+        const query = {};
+        // text search
+        if (input && input.trim()) {
+            query.$or = [
+                { username: new RegExp(input, "i") },
+                { full_name: new RegExp(input, "i") },
+                { bio: new RegExp(input, "i") },
+                { location: new RegExp(input, "i") },
+            ];
+        }
+        // language filter
+        if (filter && filter.languages?.length > 0) {
+            if (filter.type === "native") {
+                query["languages.native"] = { $in: filter.languages };
+            } else if (filter.type === "fluent") {
+                query["languages.fluent"] = { $in: filter.languages };
+            }
+        }
+        const allUsers = await User.find(query);
         const filteredUsers = allUsers.filter(user => user._id !== userId);
         res.json({
             success: true,
@@ -249,7 +273,7 @@ export const getUserConnections = async (req, res) => {
         }
         const connections = user.connections;
         const following = user.following;
-        const followers = user.followers;        
+        const followers = user.followers;
         const incomingPending = await Connection.find({
             to_user_id: userId,
             status: 'pending'

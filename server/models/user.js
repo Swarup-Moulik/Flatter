@@ -12,6 +12,11 @@ const UserSchema = new mongoose.Schema({
     followers: [{type: String, ref: 'User'}],
     following: [{type: String, ref: 'User'}],
     connections: [{type: String, ref: 'User'}],
+    languages: {
+        native: [{ type: String, default: [] }],
+        fluent: [{ type: String, default: [] }],
+        learning: [{ type: String, default: [] }]
+    }
 }, {timestamps: true, minimize: false})
 
 const User = mongoose.model('User', UserSchema);

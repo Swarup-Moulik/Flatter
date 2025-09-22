@@ -86,7 +86,7 @@ export const sendMessage = async (req, res) => {
         });
 
         const messageWithUserData = await Message.findById(message._id).populate('from_user_id');
-        if(connections[to_user_id]){
+        if (connections[to_user_id]) {
             connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
         }
 
@@ -167,6 +167,18 @@ export const unsendChatMessage = async (req, res) => {
     try {
         const { messageId } = req.body;
         const messages = await Message.findByIdAndDelete(messageId);
+        // Notify both sender & receiver that the message was unsent
+        const notifyUsers = [messages.from_user_id, messages.to_user_id];
+        notifyUsers.forEach(uid => {
+            if (connections[uid]) {
+                connections[uid].write(
+                    `data: ${JSON.stringify({
+                        type: "unsent",
+                        messageId
+                    })}\n\n`
+                );
+            }
+        });
         res.json({
             success: true,
             message: 'Message unsent'
@@ -191,9 +203,74 @@ export const deleteRecieverMessage = async (req, res) => {
             message.deleted_for.push(userId);
             await message.save();
         }
+        // Notify only the current user (not the other one)
+        if (connections[userId]) {
+            connections[userId].write(
+                `data: ${JSON.stringify({
+                    type: "deleted_for_me",
+                    messageId
+                })}\n\n`
+            );
+        }
         res.json({ success: true, message: "Message deleted for you" });
     } catch (error) {
         console.log(error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Correct a message
+export const correctMessage = async (req, res) => {
+    try {
+        const { userId } = req.auth(); // current user
+        const { messageId, corrected_text } = req.body;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ success: false, message: "Message not found" });
+        }
+
+        // Only the receiver can correct
+        if (message.to_user_id !== userId && message.from_user_id !== userId) {
+            return res.status(403).json({ success: false, message: "Not allowed to correct this message" });
+        }
+
+        if (message.from_user_id === userId) {
+            // Sender edits their own message
+            message.text = corrected_text;
+            message.edited = true; // optional flag
+        } else {
+            // Receiver corrects sender's message
+            message.corrections = [{
+                corrected_by: userId,
+                corrected_text
+            }];
+        }
+        await message.save();
+        const updatedMessage = await Message.findById(message._id).populate('from_user_id');
+
+        const notifyUsers = [message.from_user_id, message.to_user_id];
+        notifyUsers.forEach(uid => {
+            if (connections[uid]) {
+                connections[uid].write(
+                    `data: ${JSON.stringify({
+                        type: "correction",
+                        message: updatedMessage
+                    })}\n\n`
+                );
+            }
+        });
+
+        res.json({
+            success: true,
+            updatedMessage
+        });
+
+    } catch (error) {
+        console.error(error);
         res.json({
             success: false,
             message: error.message

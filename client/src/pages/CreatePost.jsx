@@ -13,9 +13,10 @@ const CreatePost = () => {
   const user = useSelector((state) => state.user.value);
   const { getToken } = useAuth();
   const navigate = useNavigate();
-  const handleSubmit = async () => {
+  const handleSubmit = async () => {  
     if (!media.length && !content) {
-      return toast.error('Please add at least one image or text')
+      toast.error('Please add at least one image or text');
+      throw new Error("Empty post");
     }
     setLoading(true);
 
@@ -109,7 +110,7 @@ const CreatePost = () => {
             }} />
             <button className='text-sm futton active-95 transition  font-medium px-8 py-2 rounded-md' disabled={loading} 
             onClick={() => toast.promise(
-              handleSubmit, { loading: 'Uploading...', success: <p>Post Added</p>, error: <p>Post Not Added</p> }
+              handleSubmit(), { loading: 'Uploading...', success: <p>Post Added</p>, error: <p>Post Not Added</p> }
             )} >
               Publish Post
             </button>
