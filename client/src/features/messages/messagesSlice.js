@@ -33,7 +33,7 @@ const messagesSlice = createSlice({
                     if (update.hidden) {
                         return null;
                     }
-                    
+
                     // Corrected logic for editing/correcting
                     // If the updated message has a `text` field, it means the original sender edited it
                     if (update.text) {
@@ -43,7 +43,7 @@ const messagesSlice = createSlice({
                     if (update.corrections) {
                         return { ...msg, ...update, corrections: update.corrections };
                     }
-                    
+
                     return { ...msg, ...update };
                 }
                 return msg;
@@ -52,6 +52,13 @@ const messagesSlice = createSlice({
         removeMessage: (state, action) => {
             const id = action.payload;
             state.messages = state.messages.filter((msg) => msg._id !== id);
+        },
+        updateMessageTranslation: (state, action) => {
+            const { id, translatedText } = action.payload;
+            const msg = state.messages.find(m => m._id === id);
+            if (msg) {
+                msg.translatedText = translatedText;
+            }
         },
     },
     extraReducers: (builder) => {
@@ -63,5 +70,5 @@ const messagesSlice = createSlice({
     }
 })
 
-export const { setMessages, addMessage, resetMessages, updateMessage, removeMessage } = messagesSlice.actions;
+export const { setMessages, addMessage, resetMessages, updateMessage, removeMessage, updateMessageTranslation } = messagesSlice.actions;
 export default messagesSlice.reducer;

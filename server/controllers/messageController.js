@@ -2,9 +2,17 @@ import fs from 'fs';
 import imagekit from '../configs/imagekit.js';
 import Message from '../models/message.js';
 import User from '../models/user.js';
+import axios from 'axios';
+import OpenAI from "openai";
 
 //Create an empty object to store server side event connections.
 const connections = {};
+
+//translation setup
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 
 //Controller function for server side event endpoint
 export const sseController = (req, res) => {
@@ -276,4 +284,26 @@ export const correctMessage = async (req, res) => {
             message: error.message
         });
     }
+};
+
+//Translate message
+export const translate = async (req, res) => {
+  const { text, targetLang } = req.body;
+  if (!text || !targetLang) return res.status(400).json({ success: false, message: "Missing fields" });
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: `Translate the following text to ${targetLang} without explanation.` },
+        { role: "user", content: text }
+      ]
+    });
+
+    const translatedText = completion.choices[0].message.content.trim();
+    res.json({ success: true, translatedText });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Translation failed" });
+  }
 };

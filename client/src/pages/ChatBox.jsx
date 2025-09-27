@@ -218,7 +218,7 @@ const ChatBox = () => {
                             </div>
                           </div>
                         )}
-                      </button>                     
+                      </button>
                     </div>
                   )}
                 </div>
@@ -294,15 +294,48 @@ const ChatBox = () => {
                       </button>
                     </div>
                   ) : (
-                    < p >
-                      {message.text}
-                    </p>
+                    <div className="flex flex-col">
+                      {/* Original message */}
+                      <p>{message.text}</p>
+                      {/* Show translation if exists */}
+                      {message.translatedText && (
+                        <p className="text-gray-500 italic mt-1">
+                          {message.translatedText}
+                        </p>
+                      )}
+                      {/* Translate button */}
+                      {!message.translatedText && message.text && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const token = await getToken();
+                              const res = await api.post(
+                                "/api/message/translate",
+                                { text: message.text, targetLang: "en" }, // replace with user language
+                                { headers: { Authorization: `Bearer ${token}` } }
+                              );
+                              if (res.data.success) {
+                                dispatch(updateMessage({
+                                  _id: message._id,
+                                  translatedText: res.data.translatedText,
+                                }));
+                              }
+                            } catch (err) {
+                              toast.error("Translation failed");
+                            }
+                          }}
+                          className="text-xs text-primary mt-1 hover:underline self-start"
+                        >
+                          Translate
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
               {/* Edited/Correction display */}
               {(message.edited || message.corrections?.length > 0) && (() => {
-                const lastCorrection = message.corrections?.[message.corrections.length - 1];               
+                const lastCorrection = message.corrections?.[message.corrections.length - 1];
                 // Case 1: Receiver corrected the message
                 if (lastCorrection && lastCorrection.corrected_by !== message.from_user_id) {
                   return (
@@ -310,11 +343,11 @@ const ChatBox = () => {
                       ✅ {lastCorrection.corrected_text}
                     </div>
                   );
-                }  
+                }
                 // Case 2: Sender (author) edited their own message
-                if (message.edited ) {
+                if (message.edited) {
                   return (<span className="mt-1 text-xs text-green-600">✅ Edited</span>);
-                }             
+                }
                 return null;
               })()}
             </div>
