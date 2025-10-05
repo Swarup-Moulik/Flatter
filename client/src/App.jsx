@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, lazy, Suspense } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useAuth, useUser } from '@clerk/clerk-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -19,24 +20,43 @@ const Discover = lazy(() => import("./pages/Discover"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Layout = lazy(() => import("./pages/Layout"));
+const CreateProfile = lazy(() => import("./pages/CreateProfile"));
 
 const App = () => {
   const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const dispatch = useDispatch();
   const { pathname } = useLocation();
   const pathnameRef = useRef(pathname);
+  const navigate = useNavigate();
 
   // Fetch user and connections once
   useEffect(() => {
-    if (!isLoaded || !user) return;
-    const fetchData = async () => {
-      const token = await getToken();
-      dispatch(fetchUser(token));
-      dispatch(fetchConnections(token));
-    }
-    fetchData();
-  }, [isLoaded, user, getToken, dispatch]);
+    if (isLoaded && isSignedIn) {
+      const fetchData = async () => {
+        try {
+          const token = await getToken();
+          const result = await dispatch(fetchUser(token)).unwrap();
+          if (!result || !result.success  || result.user === null) {
+            if (pathname !== "/create-profile") {
+              navigate('/create-profile');
+            }
+          } else {
+            dispatch(fetchConnections(token));
+            if (pathname === "/create-profile") {
+              navigate('/');
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+          if (pathname !== "/create-profile") {
+            navigate('/create-profile');
+          }
+        }
+      }
+      fetchData();
+    };
+  }, [isLoaded, isSignedIn, getToken, dispatch, pathname, navigate]);
 
   // Keep track of current pathname
   useEffect(() => {
@@ -97,7 +117,8 @@ const App = () => {
       <Toaster />
       <Suspense fallback={<Loading />}>
         <Routes>
-          <Route path='/' element={!user ? <Login /> : <Layout />}>
+          <Route path='create-profile' element={<CreateProfile />} />
+          <Route path='/' element={user === null ? <Login /> : <Layout />}>
             <Route index element={<Feed />} />
             <Route path='messages' element={<Messages />} />
             <Route path='messages/:userId' element={<ChatBox />} />

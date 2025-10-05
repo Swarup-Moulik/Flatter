@@ -12,12 +12,13 @@ export const getUserData = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) {
             return res.json({
-                success: false,
-                message: 'User not found'
+                success: true, 
+                user: null
             })
         }
         res.json({
             success: true,
+            newUser: false,
             user
         })
     } catch (error) {
@@ -33,9 +34,114 @@ export const getUserData = async (req, res) => {
 export const updateUserData = async (req, res) => {
     try {
         const { userId } = req.auth();
-        let { username, bio, location, full_name, languages } = req.body;
+        let { username, bio, location, full_name, email } = req.body;
         let { native, fluent, learning } = req.body;
+        console.log('Received request body:', req.body);
+        console.log('User ID:', userId);
+        console.log('Email from body:', email);
         const tempUser = await User.findById(userId);
+        if (!tempUser) {
+            console.log('Creating new user with ID:', userId);          
+            // Validate required fields for new user
+            if (!username || !full_name || !email) {
+                return res.json({
+                    success: false,
+                    message: 'Username, full name, and email are required'
+                });
+            }
+            // Check if username is already taken
+            const userWithUsername = await User.findOne({ username });
+            if (userWithUsername) {
+                return res.json({
+                    success: false,
+                    message: 'Username already taken'
+                });
+            }
+            // Prepare new user data
+            const newUserData = {
+                _id: userId,
+                username,
+                email,
+                full_name: full_name?.trim(),
+                bio: bio || 'Hey there, I am using Flatter!',
+                location: location || '',
+                profile_picture: '',
+                cover_photo: '',
+                followers: [],
+                following: [],
+                connections: [],
+                languages: {
+                    native: [],
+                    fluent: [],
+                    learning: []
+                }
+            };
+            // Handle languages for new user
+            if (native || fluent || learning) {
+                try {
+                    newUserData.languages = {
+                        native: native ? JSON.parse(native) : [],
+                        fluent: fluent ? JSON.parse(fluent) : [],
+                        learning: learning ? JSON.parse(learning) : []
+                    };
+                } catch (err) {
+                    console.log('Error parsing languages:', err);
+                }
+            }
+            // Handle profile picture for new user
+            const profile = req.files?.profile?.[0];
+            if (profile) {
+                try {
+                    const buffer = fs.readFileSync(profile.path);
+                    const response = await imagekit.upload({
+                        file: buffer,
+                        fileName: profile.originalname
+                    });
+                    const url = imagekit.url({
+                        path: response.filePath,
+                        transformation: [
+                            { quality: 'auto' },
+                            { format: 'webp' },
+                            { width: '512' }
+                        ]
+                    });
+                    newUserData.profile_picture = url;
+                } catch (err) {
+                    console.log('Error uploading profile picture:', err);
+                }
+            }
+            // Handle cover photo for new user
+            const cover = req.files?.cover?.[0];
+            if (cover) {
+                try {
+                    const buffer = fs.readFileSync(cover.path);
+                    const response = await imagekit.upload({
+                        file: buffer,
+                        fileName: cover.originalname
+                    });
+                    const url = imagekit.url({
+                        path: response.filePath,
+                        transformation: [
+                            { quality: 'auto' },
+                            { format: 'webp' },
+                            { width: '1280' }
+                        ]
+                    });
+                    newUserData.cover_photo = url;
+                } catch (err) {
+                    console.log('Error uploading cover photo:', err);
+                }
+            }
+            // Create the new user
+            const newUser = await User.create(newUserData);
+            console.log('New user created successfully:', newUser._id);          
+            return res.json({
+                success: true,
+                user: newUser,
+                message: "Profile Created Successfully"
+            });
+        }
+         console.log('Updating existing user:', userId);
         !username && (username = tempUser.username);
         if (tempUser.username !== username) {
             const user = await User.findOne({ username });
@@ -62,7 +168,7 @@ export const updateUserData = async (req, res) => {
                     fluent: fluent ? JSON.parse(fluent) : tempUser.languages.fluent,
                     learning: learning ? JSON.parse(learning) : tempUser.languages.learning
                 };
-            } catch (err) {              
+            } catch (err) {
                 updatedData.languages = tempUser.languages; // fallback
             }
         }
