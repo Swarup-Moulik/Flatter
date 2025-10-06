@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import Select from 'react-select';
 import { updateUser } from '../features/user/userSlice.js';
 import Theme from '../components/Theme'
-import { assets } from '../../../assets/assets.js';
+import { assets } from '../assets/assets.js';
 
 
 const languageOptions = [
