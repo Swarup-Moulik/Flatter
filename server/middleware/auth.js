@@ -7,6 +7,7 @@ export const protect = async (req, res, next) => {
                 message: 'Not Authenticated'
             })
         }
+        req.userId = userId;
         next();
     } catch (error) {
         res.json({

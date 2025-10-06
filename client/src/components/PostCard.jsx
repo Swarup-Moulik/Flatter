@@ -13,6 +13,9 @@ const PostCard = ({ post }) => {
     const [visible, setVisible] = useState(false);
     const [showPost, setShowPost] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState("");
+    const [showComments, setShowComments] = useState(false);
     const menuRef = useRef(null);
     const currentUser = useSelector((state) => state.user.value);
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>');
@@ -20,6 +23,72 @@ const PostCard = ({ post }) => {
     const { getToken } = useAuth();
     const { user } = useUser();
     const isMine = post.user._id === user.id;
+    const fetchComments = async (id) => {
+        try {
+            const { data } = await api.get(`/api/comments/${id}`);
+            if (data.success) {
+                setComments(data.comments);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    const handleAddComment = async (e) => {
+        e.preventDefault();
+        console.log("Adding comment:", newComment);
+        if (!newComment.trim()) return;
+        
+        try {
+            const token = await getToken();
+            const { data } = await api.post(
+                `/api/comments/${post._id}`,
+                {
+                    text: newComment,
+                    userFullName: user.fullName,         
+                    userProfilePicture: user.imageUrl
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (data.success) {
+                setComments((prev) => [data.comment, ...prev]);
+                setNewComment("");
+            }
+        } catch (err) {
+            toast.error("Failed to add comment");
+        }
+    };
+    const handleLikeComment = async (commentId) => {
+        try {
+            const token = await getToken();
+            const res = await api.put(`/api/comments/like/${commentId}`, {}, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.data.success) {
+                toast.success(res.data.message);
+                setComments((prev) =>
+                    prev.map((c) =>
+                        c._id === commentId
+                            ? {
+                                ...c,
+                                likes: c.likes.includes(currentUser._id)
+                                    ? c.likes.filter((id) => id !== currentUser._id)
+                                    : [...c.likes, currentUser._id],
+                            }
+                            : c
+                    )
+                );
+            }
+        } catch (err) {
+            toast.error("Failed to like comment");
+        }
+    };
+
+    // 🆕 Fetch comments when toggled
+    useEffect(() => {
+        fetchComments(post._id);
+    }, [post._id]);
+
     // Close menu when clicking outside
     useEffect(() => {
         function handleClickOutside(e) {
@@ -144,14 +213,63 @@ const PostCard = ({ post }) => {
                     <span>{likes.length}</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                    <MessageCircle className='w-4 h-4 cursor-pointer' />
-                    <span>12</span>
+                    <MessageCircle className='w-4 h-4 cursor-pointer' onClick={() => { setShowComments((p) => !p); fetchComments(post._id); }} />
+                    <span>{comments.length}</span>
                 </div>
                 <div className='flex items-center gap-1'>
                     <Share2 className='w-4 h-4 cursor-pointer' />
                     <span>7</span>
                 </div>
             </div>
+            {/* Comment Section */}
+            {showComments && (
+                <div className="border-t pt-3 space-y-3">
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                        {comments.length > 0 ? (
+                            comments.map((c) => (
+                                <div key={c._id} className="flex items-start gap-2">
+                                    <img
+                                        src={c.user?.profile_picture}
+                                        alt=""
+                                        className="w-7 h-7 rounded-full"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-medium">{c.user?.full_name}</span>{" "}
+                                        <span className="text-sm text-foreground/70">{c.text}</span>
+                                    </div>
+                                    {/* Like button for each comment */}
+                                    <div className="flex items-center gap-1 text-sm text-foreground/70">
+                                        <Heart
+                                            onClick={() => handleLikeComment(c._id)}
+                                            className={`w-4 h-4 cursor-pointer ${c.likes?.includes(currentUser._id) ? "text-red-500 fill-red-500" : ""
+                                                }`}
+                                        />
+                                        <span>{c.likes?.length || 0}</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-foreground/60">No comments yet</p>
+                        )}
+                    </div>
+                    {/* Add comment */}
+                    <form onSubmit={handleAddComment} className="flex gap-2">
+                        <input
+                            type="text"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            placeholder="Add a comment..."
+                            className="flex-1 bg-transparent border rounded-lg px-3 py-1 text-sm focus:outline-none"
+                        />
+                        <button
+                            type="submit"
+                            className="text-primary text-sm font-medium hover:underline cursor-pointer"
+                        >
+                            Post
+                        </button>
+                    </form>
+                </div>
+            )}
             {/* Fullscreen Viewer */}
             {showPost && (
                 <PostViewer
@@ -159,6 +277,7 @@ const PostCard = ({ post }) => {
                     currentIndex={currentIndex}
                     setCurrentIndex={setCurrentIndex}
                     onClose={() => setShowPost(false)}
+                    postId={post._id}
                 />
             )}
         </div>

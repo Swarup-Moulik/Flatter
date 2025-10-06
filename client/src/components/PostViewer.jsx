@@ -3,7 +3,6 @@ import { useEffect } from "react";
 
 const PostViewer = ({ posts, currentIndex, setCurrentIndex, onClose }) => {
   const media = posts[currentIndex];
-
   // Keyboard navigation (← → Esc)
   useEffect(() => {
     const handleKey = (e) => {
@@ -23,7 +22,6 @@ const PostViewer = ({ posts, currentIndex, setCurrentIndex, onClose }) => {
       <button className="absolute top-5 right-5 text-white cursor-pointer" onClick={onClose}>
         <X className="w-8 h-8" />
       </button>
-
       {/* Left */}
       {posts.length > 1 && (
         <button
@@ -76,9 +74,8 @@ const PostViewer = ({ posts, currentIndex, setCurrentIndex, onClose }) => {
           {posts.map((_, i) => (
             <div
               key={i}
-              className={`w-3 h-3 rounded-full ${
-                i === currentIndex ? "bg-white" : "bg-gray-500"
-              }`}
+              className={`w-3 h-3 rounded-full ${i === currentIndex ? "bg-white" : "bg-gray-500"
+                }`}
             />
           ))}
         </div>
