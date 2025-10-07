@@ -2,7 +2,7 @@ import Comment from "../models/comment.js";
 
 export const addComment = async (req, res) => {
     try {
-        const { text, parentId } = req.body;
+        const { text, parentId, userFullName, userProfilePicture } = req.body;
         const { postId } = req.params;
         console.log("Req.body:", req.body);
 
@@ -11,10 +11,9 @@ export const addComment = async (req, res) => {
             user: req.userId,
             text,
             parentId: parentId || null,
-            userFullName: req.userFullName,
-            userProfilePicture: req.userProfilePicture,
-        });
-        comment = await Comment.findById(comment._id).populate("user", "full_name profile_picture");
+            userFullName,
+            userProfilePicture
+        });       
         res.status(201).json({
             success: true,
             comment

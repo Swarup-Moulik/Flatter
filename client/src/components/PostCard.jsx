@@ -1,7 +1,7 @@
 import { BadgeCheck, EllipsisVertical, Heart, MessageCircle, Share2, Trash } from 'lucide-react'
 import moment from 'moment'
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import api from '../api/axios';
@@ -25,9 +25,16 @@ const PostCard = ({ post }) => {
     const isMine = post.user._id === user.id;
     const fetchComments = async (id) => {
         try {
-            const { data } = await api.get(`/api/comments/${id}`);
+            const token = await getToken();
+            console.log("Running fetchComments for:", currentUser);
+            const { data } = await api.get(`/api/comments/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (data.success) {
+                console.log("Comments fetched:", data.comments);
                 setComments(data.comments);
+            } else {
+                console.log("Fetch returned failure:", data);
             }
         } catch (err) {
             console.error(err);
@@ -37,15 +44,15 @@ const PostCard = ({ post }) => {
         e.preventDefault();
         console.log("Adding comment:", newComment);
         if (!newComment.trim()) return;
-        
+
         try {
             const token = await getToken();
             const { data } = await api.post(
                 `/api/comments/${post._id}`,
                 {
                     text: newComment,
-                    userFullName: user.fullName,         
-                    userProfilePicture: user.imageUrl
+                    userFullName: currentUser.full_name,
+                    userProfilePicture: currentUser.profile_picture
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -86,7 +93,11 @@ const PostCard = ({ post }) => {
 
     // 🆕 Fetch comments when toggled
     useEffect(() => {
+        console.log("showComments changed:", showComments);
+
+        console.log("Fetching comments for post:", post._id);
         fetchComments(post._id);
+
     }, [post._id]);
 
     // Close menu when clicking outside
@@ -213,7 +224,7 @@ const PostCard = ({ post }) => {
                     <span>{likes.length}</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                    <MessageCircle className='w-4 h-4 cursor-pointer' onClick={() => { setShowComments((p) => !p); fetchComments(post._id); }} />
+                    <MessageCircle className='w-4 h-4 cursor-pointer' onClick={() => setShowComments((p) => !p)} />
                     <span>{comments.length}</span>
                 </div>
                 <div className='flex items-center gap-1'>
@@ -229,12 +240,12 @@ const PostCard = ({ post }) => {
                             comments.map((c) => (
                                 <div key={c._id} className="flex items-start gap-2">
                                     <img
-                                        src={c.user?.profile_picture}
+                                        src={c.userProfilePicture}
                                         alt=""
                                         className="w-7 h-7 rounded-full"
                                     />
                                     <div>
-                                        <span className="text-sm font-medium">{c.user?.full_name}</span>{" "}
+                                        <span className="text-sm font-medium">{c.userFullName}</span>{" "}
                                         <span className="text-sm text-foreground/70">{c.text}</span>
                                     </div>
                                     {/* Like button for each comment */}

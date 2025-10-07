@@ -10,5 +10,5 @@ const CommentSchema = new mongoose.Schema({
   userProfilePicture: { type: String },
 }, { timestamps: true });
 
-const Comment = mongoose.model("Comment", CommentSchema);
+const Comment = mongoose.models.Comment || mongoose.model("Comment", CommentSchema);
 export default Comment;
